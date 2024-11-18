@@ -159,7 +159,7 @@ class OrdersApi():
                             log_error(f'Could not extract order data for {pool}.')
 
                     else:
-                        log_error('3-legs trade or higher are not available: {e}')
+                        log_error('3-legs trade or higher are not available: {e}') # 3 leg trade start here
 
             except KeyError as e:
                 log_error(f'Input data is ill-formatted: {e}')

@@ -1,100 +1,56 @@
 from flask import Flask, request, jsonify
-from utils.schemaChecker import checkSchemaValid
+from utils.schemaChecker import checkRequestSchemaValid, checkNotifySchemaValid
 from utils.dataFormatter import inputGrapher
+from cowsol.src.apis.orders import OrdersApi
+from cowsol.src.strategies.spread_solver import SpreadSolverApi
+from cowsol.src.util.os import load_config, set_output, save_output, log_info
+
 app = Flask(__name__)
 
-
-SCHEMA = {
-    "type": "object",
-    "properties": {
-        "id": {"type": "string"},
-        "tokens": {
-            "type": "object",
-            "additionalProperties": {
-                "type": "object",
-                "properties": {
-                    "decimals": {"type": "integer"},
-                    "symbol": {"type": "string"},
-                    "referencePrice": {"type": "string"},
-                    "availableBalance": {"type": "string"},
-                    "trusted": {"type": "boolean"}
-                },
-                "required": ["decimals", "symbol", "referencePrice", "availableBalance", "trusted"]
-            }
-        },
-        "orders": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "uid": {"type": "string"},
-                    "sellToken": {"type": "string"},
-                    "buyToken": {"type": "string"},
-                    "sellAmount": {"type": "string"},
-                    "fullSellAmount": {"type": "string"},
-                    "buyAmount": {"type": "string"},
-                    "fullBuyAmount": {"type": "string"},
-                    "feePolicies": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "kind": {"type": "string"},
-                                "maxVolumeFactor": {"type": "number"},
-                                "factor": {"type": "number"},
-                                "quote": {
-                                    "type": "object",
-                                    "properties": {
-                                        "sell_amount": {"type": "string"},
-                                        "buy_amount": {"type": "string"},
-                                        "fee": {"type": "string"}
-                                    },
-                                    "required": ["sell_amount", "buy_amount", "fee"]
-                                }
-                            },
-                            "required": ["kind", "factor"]
-                        }
-                    },
-                    "validTo": {"type": "integer"},
-                    "kind": {"type": "string"},
-                    "receiver": {"type": "string"},
-                    "owner": {"type": "string"},
-                    "partiallyFillable": {"type": "boolean"},
-                    "preInteractions": {"type": "array"},
-                    "postInteractions": {"type": "array"},
-                    "sellTokenSource": {"type": "string"},
-                    "buyTokenDestination": {"type": "string"},
-                    "class": {"type": "string"},
-                    "appData": {"type": "string"},
-                    "signingScheme": {"type": "string"},
-                    "signature": {"type": "string"}
-                },
-                "required": ["uid", "sellToken", "buyToken", "sellAmount", "buyAmount"]
-            }
-        },
-        "liquidity": {
-            "type": "array",
-            "items": {"type": "object"}
-        },
-        "effectiveGasPrice": {"type": "string"},
-        "deadline": {"type": "string", "format": "date-time"},
-        "surplusCapturingJitOrderOwners": {
-            "type": "array",
-            "items": {"type": "string"}
-        }
-    },
-    "required": ["id", "tokens", "orders", "effectiveGasPrice", "deadline"]
-}
-
-@app.route("/")
-def solve():
-
-    
+# Get schema for solve result, and notify input
+# Codes: 200
+@app.route("/notify", methods=["POST"])
+def notify():
     data = request.get_json()
-    if not checkSchemaValid(data):
+    if not checkNotifySchemaValid(data):
+        return jsonify({"error": "Invalid JSON data."}), 400 # pointless
+    print(f"Auction ID: {data['auctionId']}\nSolution ID: {data['solutionId']}\nNotification: {data['kind']}")
+    return jsonify({"message": "Received notification"}), 200
+
+# Codes: 200, 400, 429 (The solver cannot keep up. It is too busy to handle more requests.), 500
+@app.route("/solve", methods=["POST"])
+def solve():
+    data = request.get_json()
+    if not checkRequestSchemaValid(data):
         return jsonify({"error": "Invalid JSON data."}), 400
     inputGrapher(data["orders"], data["tokens"])
-    return jsonify({"success": True})
+
+    # Copied and pasted (TODO: Refactor):
+    oa = OrdersApi(data)
+
+    result = {
+        'amms': {},
+        'orders': {}
+    }
+
+    for order_num, order in oa.orders.items():
+
+        order = oa.parse_order_for_spread_trade(order, order_num)
+        amms = oa.parse_amms_for_spread_trade(order)
+
+        # Skip if the input order is invalid.
+        if not order or not amms:
+            continue
+
+        # Create a solver instance for each order.
+        solver = SpreadSolverApi(amms)
+        solution = solver.solve(order)
+
+        # Update results for orders instance.
+        result['amms'].update(solution['amms'])
+        result['orders'].update(solution['orders'])
+
+    return jsonify(result) # Success
     
     
 
