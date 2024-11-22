@@ -1,2 +1,0 @@
-python-dotenv==0.20.0
-scipy==1.9.3
