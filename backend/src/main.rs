@@ -1,6 +1,7 @@
-use actix_web::{web, App, HttpServer, Responder, HttpResponse};
-use serde_json::json;
+use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use log::info; // Logging macro
+use serde_json::json;
+use solvers_dto::auction::Auction;
 
 #[derive(serde::Deserialize, Debug)]
 struct NotifyData {
@@ -16,10 +17,8 @@ async fn get_hello() -> impl Responder {
     HttpResponse::Ok().json(json!({"message": "Hello, World!"}))
 }
 
-async fn post_data(item: web::Json<MyData>) -> impl Responder {
-    HttpResponse::Ok().json({
-        format!("Solving : {} {}", item.name, item.age)
-    })
+async fn post_data(auction: web::Json<Auction>) -> impl Responder {
+    HttpResponse::Ok().json({ format!("Solving : {}", auction.id.unwrap_or_default()) })
 }
 
 async fn post_notify(item: web::Json<NotifyData>) -> impl Responder {
@@ -27,11 +26,11 @@ async fn post_notify(item: web::Json<NotifyData>) -> impl Responder {
     HttpResponse::Ok().json(json!({"status": "ok"}))
 }
 
-#[derive(serde::Deserialize)]
-struct MyData {
-    name: String,
-    age: u8,
-}
+// #[derive(serde::Deserialize)]
+// struct MyData {
+//     name: String,
+//     age: u8,
+// }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -41,7 +40,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .route("/", web::get().to(get_hello))
             .route("/notify", web::post().to(post_notify))
-            .route("/solve", web::post().to(post_data)) 
+            .route("/solve", web::post().to(post_data))
     })
     .bind("127.0.0.1:8080")?
     .run()
