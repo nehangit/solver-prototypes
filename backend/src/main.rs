@@ -4,6 +4,12 @@ use serde_json::json;
 use solvers_dto::auction::Auction;
 use solvers_dto::notification::Notification;
 
+mod structures;
+mod utils;
+
+use structures::pools::Pools;
+use utils::parse::json_to_struct;
+
 #[derive(serde::Deserialize, Debug)]
 struct NotifyData {
     auctionId: String,
@@ -33,6 +39,7 @@ async fn post_notify(notif: web::Json<Notification>) -> impl Responder {
 //     age: u8,
 // }
 
+/*
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init();
@@ -46,4 +53,9 @@ async fn main() -> std::io::Result<()> {
     .bind("127.0.0.1:8080")?
     .run()
     .await
+}*/
+
+fn main() {
+    let pools: Pools = json_to_struct("pool_data.json");
+    println!("{:#?}", pools);
 }
