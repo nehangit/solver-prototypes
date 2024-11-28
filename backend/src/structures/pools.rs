@@ -121,9 +121,3 @@ pub struct DexData {
     #[serde(rename = "type")]
     pub dex_type: String,
 }
-
-// Example usage:
-// Deserialize JSON string into Rust object
-// let json_data = "..."; // Replace with the JSON string
-// let parsed: Root = serde_json::from_str(json_data).unwrap();
-// println!("{:#?}", parsed);
