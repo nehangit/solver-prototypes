@@ -3,20 +3,19 @@ use log::info; // Logging macro
 use serde_json::json;
 use solvers_dto::auction::Auction;
 use solvers_dto::notification::Notification;
-use crate::token_swap::get_highest_price_pool;
-use crate::structures::pools::Pool;  // If you need to use the Pool struct
 
 mod structures;
 mod utils;
 mod token_swap;
 
-use structures::pools::Pools;
+use structures::pools::{Pool, Pools};
 use utils::parse::json_to_struct;
+use token_swap::get_highest_price_pool;
 
 #[derive(serde::Deserialize, Debug)]
 struct NotifyData {
-    auctionId: String,
-    solutionId: u64,
+    auction_id: String,
+    solution_id: u64,
     kind: String,
     // Additional metadata is handled dynamically due to `additionalProperties`
     #[serde(flatten)]
@@ -36,13 +35,6 @@ async fn post_notify(notif: web::Json<Notification>) -> impl Responder {
     HttpResponse::Ok().json(json!({"status": "ok"}))
 }
 
-// #[derive(serde::Deserialize)]
-// struct MyData {
-//     name: String,
-//     age: u8,
-// }
-
-/*
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init();
@@ -56,25 +48,4 @@ async fn main() -> std::io::Result<()> {
     .bind("127.0.0.1:8080")?
     .run()
     .await
-}*/
-
-fn main() {
-    let pools: Pools = json_to_struct("pool_data.json");
-    println!("{:#?}", pools);
 }
-
-
-/*
-How to use get_highest_price_pool() to get the best pool
-
-#[tokio::main]
-async fn main() {
-    let token_from = "0xdef1ca1fb7fbcdc777520aa7f396b4e015f497ab";
-    let token_to = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
-
-    match get_highest_price_pool(token_from, token_to).await {
-        Ok(pool) => println!("Found pool: {:?}", pool),
-        Err(e) => eprintln!("Error: {}", e),
-    }
-}
-*/

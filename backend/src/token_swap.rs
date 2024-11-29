@@ -13,6 +13,17 @@ pub enum FetchPoolError {
     NoMatchingPools,
 }
 
+/*
+    Example usage:
+
+    let token_from = "0xdef1ca1fb7fbcdc777520aa7f396b4e015f497ab";
+    let token_to = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+
+    match get_highest_price_pool(token_from, token_to).await {
+        Ok(pool) => println!("Found pool: {:?}", pool),
+        Err(e) => eprintln!("Error: {}", e),
+    }
+*/
 pub async fn get_highest_price_pool(token_from: &str, token_to: &str) -> Result<Pool, FetchPoolError> {
     let client = Client::new();
 
