@@ -9,6 +9,7 @@ mod utils;
 mod token_swap;
 
 use structures::pools::{Pool, Pools};
+// use structures::solution::Solutions;
 use utils::parse::json_to_struct;
 use token_swap::get_highest_price_pool;
 
@@ -27,7 +28,15 @@ async fn get_hello() -> impl Responder {
 }
 
 async fn post_data(auction: web::Json<Auction>) -> impl Responder {
-    HttpResponse::Ok().json({ format!("Solving : {}", auction.id.unwrap_or_default()) })
+    info!("Received solve request: {:?}", auction);
+
+    // Return an empty solution
+    // let empty_solution = Solutions {
+    //     solutions: vec![],
+    // };
+
+    HttpResponse::Ok().json("{solutions: []}")
+    // HttpResponse::Ok().json({ format!("Solving : {}", auction.id.unwrap_or_default()) })
 }
 
 async fn post_notify(notif: web::Json<Notification>) -> impl Responder {
