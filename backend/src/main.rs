@@ -10,7 +10,8 @@ mod token_swap;
 
 use structures::pools::{Pool, Pools};
 use utils::parse::json_to_struct;
-use token_swap::get_highest_price_pool;
+use token_swap::get_direct_swap_pool;
+use token_swap::get_intermediate_swap_pools;
 
 #[derive(serde::Deserialize, Debug)]
 struct NotifyData {
