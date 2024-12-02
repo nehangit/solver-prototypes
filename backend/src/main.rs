@@ -11,8 +11,9 @@ mod token_swap;
 mod utils;
 
 use structures::pools::{Pool, Pools};
-use token_swap::get_highest_price_pool;
 use utils::parse::json_to_struct;
+use token_swap::get_direct_swap_pool;
+use token_swap::get_intermediate_swap_pools;
 
 async fn get_hello() -> impl Responder {
     HttpResponse::Ok().json(json!({"message": "Hello, World!"}))
