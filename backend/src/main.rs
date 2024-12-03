@@ -31,7 +31,7 @@ async fn post_solve(auction: web::Json<Auction>) -> impl Responder {
         }
     };
     let deadline = auction_domain.deadline.clone();
-
+    let groups = naive::group_by_token_pair(&auction_domain);
     HttpResponse::Ok().json(json!({
         "message": format!("Solving auction {}", auction.id.unwrap_or_default())
     }))

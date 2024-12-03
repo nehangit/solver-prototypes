@@ -1,18 +1,20 @@
 use solvers::domain::auction::Auction; // Domain object
+use std::collections::HashMap;
 
 #[derive(Debug)]
-struct Group<'a> {
-    orders: Vec<&'a order::Order>,
-    liquidity: &'a liquidity::Liquidity,
-    pool: &'a liquidity::constant_product::Pool,
+pub struct Group<'a> {
+    orders: Vec<&'a solvers::domain::order::Order>,
+    liquidity: &'a solvers::domain::liquidity::Liquidity,
+    pool: &'a solvers::domain::liquidity::constant_product::Pool,
 }
-type Groups<'a> = HashMap<liquidity::TokenPair, Group<'a>>;
+pub type Groups<'a> = HashMap<solvers::domain::liquidity::TokenPair, Group<'a>>;
 
 ///
-/// Groups an auction by token pairs, where each group contains:
+/// Helper function that groups an auction by token pairs, where each group contains:
 /// 1. All orders associated with the token pair.
 /// 2. The "deepest" constant product pool (i.e., the pool with the most liquidity) for the pair,
 ///    as indicated by the highest `K` value in Uniswap V2-style constant product pools.
+/// See above data structures for implementations.
 ///
 pub fn group_by_token_pair(auction: &Auction) -> Groups {
     // Create a mutable collection to store groups by token pairs.
@@ -23,7 +25,7 @@ pub fn group_by_token_pair(auction: &Auction) -> Groups {
         // Check if the current liquidity is a constant product pool.
         // If not, skip this iteration.
         let pool = match &liquidity.state {
-            solvers::domain::liquidity::State::ConstantProductliquidity(pool) => pool,
+            solvers::domain::liquidity::State::ConstantProduct(pool) => pool,
             _ => continue,
         };
 
@@ -56,10 +58,11 @@ pub fn group_by_token_pair(auction: &Auction) -> Groups {
 
         // Try to create a token pair from the order's sell and buy tokens.
         // If the tokens are invalid (e.g., identical), skip this order.
-        let tokens = match liquidity::TokenPair::new(order.sell.token, order.buy.token) {
-            Some(value) => value,
-            None => continue,
-        };
+        let tokens =
+            match solvers::domain::liquidity::TokenPair::new(order.sell.token, order.buy.token) {
+                Some(value) => value,
+                None => continue,
+            };
 
         // Add the order to the corresponding group for the token pair.
         groups
@@ -70,6 +73,6 @@ pub fn group_by_token_pair(auction: &Auction) -> Groups {
     // Remove any groups that do not contain orders.
     groups.retain(|_, group| !group.orders.is_empty());
 
-    // Return the grouped structure.
+    // Return the groups structure.
     groups
 }
