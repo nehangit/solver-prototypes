@@ -5,15 +5,18 @@ use serde_json::json;
 use solvers::api::routes::solve::dto::auction::to_domain;
 use solvers_dto::auction::Auction;
 use solvers_dto::notification::Notification;
+// use solvers_dto::solution::Solution;
+// use solvers::api::routes::solve::dto::solution::from_domain;
 
+mod naive;
 mod structures;
 mod token_swap;
 mod utils;
 
 use structures::pools::{Pool, Pools};
-use utils::parse::json_to_struct;
 use token_swap::get_direct_swap_pool;
 use token_swap::get_intermediate_swap_pools;
+use utils::parse::json_to_struct;
 
 async fn get_hello() -> impl Responder {
     HttpResponse::Ok().json(json!({"message": "Hello, World!"}))
@@ -27,7 +30,8 @@ async fn post_solve(auction: web::Json<Auction>) -> impl Responder {
             return HttpResponse::BadRequest().json(json!({ "error": err.message }));
         }
     };
-
+    let deadline = auction_domain.deadline.clone();
+    let groups = naive::group_by_token_pair(&auction_domain);
     HttpResponse::Ok().json(json!({
         "message": format!("Solving auction {}", auction.id.unwrap_or_default())
     }))
