@@ -2,16 +2,17 @@ use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use log::info; // Logging macro
 use serde_json::json;
 
-use solvers::api::routes::solve::dto::auction::to_domain;
+// use solvers::api::routes::solve::dto::auction::to_domain;
 use solvers_dto::auction::Auction;
 use solvers_dto::notification::Notification;
-// use solvers_dto::solution::Solution;
+use solvers_dto::solution::Solution;
 // use solvers::api::routes::solve::dto::solution::from_domain;
 
-mod naive;
+// mod naive;
 mod structures;
-mod token_swap;
 mod utils;
+mod token_swap;
+mod solver;
 
 use structures::pools::{Pool, Pools};
 use token_swap::get_direct_swap_pool;
@@ -22,6 +23,7 @@ async fn get_hello() -> impl Responder {
     HttpResponse::Ok().json(json!({"message": "Hello, World!"}))
 }
 
+/*
 async fn post_solve(auction: web::Json<Auction>) -> impl Responder {
     let auction_domain = match to_domain(&auction) {
         Ok(value) => value,
@@ -36,12 +38,19 @@ async fn post_solve(auction: web::Json<Auction>) -> impl Responder {
         "message": format!("Solving auction {}", auction.id.unwrap_or_default())
     }))
 }
+*/
+
+// temporary post_solve while to_domain can't be imported
+async fn post_solve(auction: web::Json<Auction>) -> impl Responder {
+    HttpResponse::Ok().json({ format!("Solving : {}", auction.id.unwrap_or_default()) })
+}
 
 async fn post_notify(notif: web::Json<Notification>) -> impl Responder {
     info!("Received notify request: {:?}", notif);
     HttpResponse::Ok().json(json!({"status": "ok"}))
 }
 
+/*
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init();
@@ -55,4 +64,11 @@ async fn main() -> std::io::Result<()> {
     .bind("127.0.0.1:8080")?
     .run()
     .await
+}
+*/
+
+fn main() {
+    let auction: Auction = json_to_struct("data/onchain_liquidity.json");
+    let solution = solver::fill_with_onchain_liquidity(auction);
+    println!("{:#?}", solution);
 }

@@ -1,0 +1,77 @@
+{
+    "id": "12345",
+    "tokens": {
+        "0x1111111111111111111111111111111111111111": {
+            "decimals": 0,
+            "symbol": "111",
+            "referencePrice": "1234567890",
+            "availableBalance": "1234567890",
+            "trusted": true
+        },
+        "0x2222222222222222222222222222222222222222": {
+            "decimals": 0,
+            "symbol": "222",
+            "referencePrice": "1234567890",
+            "availableBalance": "1234567890",
+            "trusted": true
+        },
+        "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2": {
+            "decimals": 0,
+            "symbol": "WETH",
+            "referencePrice": "1234567890",
+            "availableBalance": "1234567890",
+            "trusted": true
+        }
+    },
+    "orders": [
+        {
+            "uid": "0x30cff40d9f60caa68a37f0ee73253ad6ad72b45580c945fe3ab67596476937197854163b1b0d24e77dca702b97b5cc33e0f83dcb626122a6",
+            "sellToken": "0x1111111111111111111111111111111111111111",
+            "buyToken": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+            "sellAmount": "100",
+            "fullSellAmount": "100",
+            "buyAmount": "200",
+            "fullBuyAmount": "200",
+            "feePolicies": [
+            ],
+            "validTo": 0,
+            "kind": "sell",
+            "receiver": "0x0000000000000000000000000000000000000000",
+            "owner": "0x0000000000000000000000000000000000000000",
+            "partiallyFillable": true,
+            "preInteractions": [
+            ],
+            "postInteractions": [
+            ],
+            "sellTokenSource": "erc20",
+            "buyTokenDestination": "erc20",
+            "class": "market",
+            "appData": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "signingScheme": "eip712",
+            "signature": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+    ],
+    "liquidity": [
+        {
+            "kind": "constantProduct",
+            "tokens": {
+                "0x1111111111111111111111111111111111111111": {
+                    "balance": "100"
+                },
+                "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2": {
+                    "balance": "200"
+                }
+            },
+            "fee": "13.37",
+            "router": "0x0000000000000000000000000000000000000000",
+            "id": "string",
+            "address": "0x0000000000000000000000000000000000000000",
+            "gasEstimate": "1234567890"
+        }
+    ],
+    "effectiveGasPrice": "1234567890",
+    "deadline": "1970-01-01T00:00:00.000Z",
+    "surplusCapturingJitOrderOwners": [
+        "0x0000000000000000000000000000000000000000"
+    ]
+}
