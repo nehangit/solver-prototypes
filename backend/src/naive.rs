@@ -1,3 +1,4 @@
+// use num::{bigint::Sign, BigInt};
 use primitive_types::U256;
 use solvers::domain::{auction::Auction, order::Side}; // Domain object
 use std::collections::HashMap;
@@ -87,10 +88,31 @@ struct TokenContext {
     sell_volume: U256,
 }
 
+// pub fn u256_to_big_int(input: &U256) -> BigInt {
+//     BigInt::from_biguint(Sign::Plus, u256_to_big_uint(input))
+// }
+
+// impl TokenContext {
+//     pub fn is_excess_after_fees(&self, deficit: &TokenContext, fee: Ratio<u32>) -> bool {
+//         fee.denom()
+//             * u256_to_big_int(&self.reserve)
+//             * (u256_to_big_int(&deficit.sell_volume) - u256_to_big_int(&deficit.buy_volume))
+//             < (fee.denom() - fee.numer())
+//                 * u256_to_big_int(&deficit.reserve)
+//                 * (u256_to_big_int(&self.sell_volume) - u256_to_big_int(&self.buy_volume))
+//     }
+
+//     pub fn is_excess_before_fees(&self, deficit: &TokenContext) -> bool {
+//         u256_to_big_int(&self.reserve)
+//             * (u256_to_big_int(&deficit.sell_volume) - u256_to_big_int(&deficit.buy_volume))
+//             < u256_to_big_int(&deficit.reserve)
+//                 * (u256_to_big_int(&self.sell_volume) - u256_to_big_int(&self.buy_volume))
+//     }
+// }
 // Split orders into contexts: takes a limit order array with all having the same pair of tokens,
 // and consolidate the buy and sell contexts (amount being bought and sold, and chosen pool reserve amount)
 
-fn split_into_contexts(group: &Group) -> (TokenContext, TokenContext) {
+pub fn split_into_contexts(group: &Group) -> (TokenContext, TokenContext) {
     let pool = group.pool;
     let orders = &group.orders;
     let mut contexts = HashMap::new();
@@ -123,23 +145,22 @@ fn split_into_contexts(group: &Group) -> (TokenContext, TokenContext) {
     for order in orders {
         // Update the context for the buy token
         if let Some(buy_context) = contexts.get_mut(&order.buy.token.0) {
-            if (order.side == Side::Buy) {
+            if order.side == Side::Buy {
                 buy_context.buy_volume += order.buy.amount;
             }
         } else {
-            panic!("Buy token in order not found contexts object");
+            panic!("Buy token in order not part of pool token pair");
         }
 
         // Update the context for the sell token
         if let Some(sell_context) = contexts.get_mut(&order.sell.token.0) {
-            if (order.side == Side::Sell) {
+            if order.side == Side::Sell {
                 sell_context.sell_volume += order.sell.amount;
             }
         } else {
-            panic!("Sell token in order not found in contexts object");
+            panic!("Sell token in order not part of pool token pair");
         }
     }
-    assert_eq!(contexts.len(), 2, "Orders contain more than two tokens");
     let mut contexts = contexts.drain().map(|(_, v)| v);
     (contexts.next().unwrap(), contexts.next().unwrap())
 }
