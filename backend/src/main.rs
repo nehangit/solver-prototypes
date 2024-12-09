@@ -1,12 +1,15 @@
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
-use log::info; // Logging macro
+use log::info;
+use naive::split_into_contexts;
+// Logging macro
 use serde_json::json;
 
 use solvers::api::routes::solve::dto::auction::to_domain;
+use solvers::domain::solver::Naive;
 use solvers_dto::auction::Auction;
 use solvers_dto::notification::Notification;
 // use solvers_dto::solution::Solution;
-// use solvers::api::routes::solve::dto::solution::from_domain;
+use solvers::api::routes::solve::dto::solution::from_domain;
 
 mod naive;
 mod structures;
@@ -30,11 +33,18 @@ async fn post_solve(auction: web::Json<Auction>) -> impl Responder {
             return HttpResponse::BadRequest().json(json!({ "error": err.message }));
         }
     };
-    let deadline = auction_domain.deadline.clone();
-    let groups = naive::group_by_token_pair(&auction_domain);
-    HttpResponse::Ok().json(json!({
-        "message": format!("Solving auction {}", auction.id.unwrap_or_default())
-    }))
+    // let deadline = auction_domain.deadline.clone();
+    // let groups = naive::group_by_token_pair(&auction_domain);
+    // for (token_pair, group) in groups.iter() {
+    //     (context_a, context_b) = split_into_contexts(group);
+    // }
+    let naivesolver = Naive;
+    let solutions = naivesolver.solve(auction_domain).await;
+    let solutionsdto = from_domain(&solutions);
+    HttpResponse::Ok().json(solutionsdto)
+    // HttpResponse::Ok().json(json!({
+    //     "message": format!("Solving auction {}", auction.id.unwrap_or_default())
+    // }))
 }
 
 async fn post_notify(notif: web::Json<Notification>) -> impl Responder {
