@@ -1,8 +1,9 @@
-use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{web, App, HttpResponse, HttpServer, Responder, middleware::Logger};
 use log::info;
 use naive::split_into_contexts;
-// Logging macro
+
 use serde_json::json;
+use serde_json::from_str;
 
 use solvers::api::routes::solve::dto::auction::to_domain;
 use solvers::domain::solver::Naive;
@@ -22,6 +23,7 @@ use token_swap::get_intermediate_swap_pools;
 use utils::parse::json_to_struct;
 
 async fn get_hello() -> impl Responder {
+    log::info!("Received hello  request: {:?}", "Hello, World!");
     HttpResponse::Ok().json(json!({"message": "Hello, World!"}))
 }
 
@@ -47,22 +49,32 @@ async fn post_solve(auction: web::Json<Auction>) -> impl Responder {
     // }))
 }
 
-async fn post_notify(notif: web::Json<Notification>) -> impl Responder {
-    info!("Received notify request: {:?}", notif);
+async fn post_notify(body: web::Bytes) -> impl Responder {
+    let body_str = String::from_utf8_lossy(&body);
+    info!("Received notify request: {}", body_str);
+
+    let notif: Notification = match from_str(&body_str) {
+        Ok(notif) => notif,
+        Err(_) => {
+            return HttpResponse::BadRequest().json(json!({"error": "Invalid input"}));
+        }
+    };
+
     HttpResponse::Ok().json(json!({"status": "ok"}))
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init();
-
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
     HttpServer::new(|| {
         App::new()
+            .wrap(Logger::default())
             .route("/", web::get().to(get_hello))
             .route("/notify", web::post().to(post_notify))
             .route("/solve", web::post().to(post_solve))
     })
-    .bind("127.0.0.1:8080")?
+    .bind(format!("0.0.0.0:{}",port))?
     .run()
     .await
 }
