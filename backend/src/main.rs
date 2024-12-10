@@ -4,6 +4,7 @@ use naive::split_into_contexts;
 
 use serde_json::json;
 use serde_json::from_str;
+use std::env;
 
 use solvers::api::routes::solve::dto::auction::to_domain;
 use solvers::domain::solver::Naive;
