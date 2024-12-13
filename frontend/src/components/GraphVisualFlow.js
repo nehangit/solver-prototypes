@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import ReactFlow, {
     MiniMap,
     Controls,
@@ -12,11 +12,20 @@ const GraphVisualFlow = ({ operations }) => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
+    const nodesRef = useRef(nodes);
+    const edgesRef = useRef(edges);
+
+    useEffect(() => {
+        nodesRef.current = nodes;
+        edgesRef.current = edges;
+    }, [nodes, edges]);
+
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
     useEffect(() => {
         const handleOperations = async () => {
-            let updatedNodes = [...nodes];
-            let updatedEdges = [...edges];
+            let updatedNodes = [...nodesRef.current];
+            let updatedEdges = [...edgesRef.current];
 
             for (const op of operations) {
                 if (op.type === 'addNode') {
@@ -47,16 +56,17 @@ const GraphVisualFlow = ({ operations }) => {
                     );
                 }
 
-                // Update the state after processing each operation
+                nodesRef.current = updatedNodes;
+                edgesRef.current = updatedEdges;
                 setNodes([...updatedNodes]);
                 setEdges([...updatedEdges]);
 
-                // Wait for 250ms before processing the next operation
                 await delay(500);
             }
         };
+
         handleOperations();
-    }, []);
+    }, [operations, setNodes, setEdges]);
 
     return (
         <div style={{ height: '95vh', width: '100vw' }}>
