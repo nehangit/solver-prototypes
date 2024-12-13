@@ -10,6 +10,7 @@ const DataInput = ({ onSubmit }) => {
             console.log(parsedData);
             onSubmit(parsedData);
         } catch (err) {
+            console.log(err);
             alert('Invalid JSON format');
         }
     };

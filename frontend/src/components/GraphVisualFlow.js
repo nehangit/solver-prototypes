@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, { useEffect } from 'react';
 import ReactFlow, {
     MiniMap,
     Controls,
@@ -11,7 +11,7 @@ import 'reactflow/dist/style.css';
 const GraphVisualFlow = ({ operations }) => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-    
+
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     useEffect(() => {
         const handleOperations = async () => {
@@ -27,7 +27,9 @@ const GraphVisualFlow = ({ operations }) => {
                     };
                     updatedNodes.push(newNode);
                 } else if (op.type === 'deleteNode') {
-                    updatedNodes = updatedNodes.filter((node) => node.id !== op.id);
+                    updatedNodes = updatedNodes.filter(
+                        (node) => node.id !== op.id
+                    );
                     updatedEdges = updatedEdges.filter(
                         (edge) => edge.source !== op.id && edge.target !== op.id
                     );
@@ -40,7 +42,9 @@ const GraphVisualFlow = ({ operations }) => {
                     };
                     updatedEdges.push(newEdge);
                 } else if (op.type === 'deleteEdge') {
-                    updatedEdges = updatedEdges.filter((edge) => edge.id !== op.id);
+                    updatedEdges = updatedEdges.filter(
+                        (edge) => edge.id !== op.id
+                    );
                 }
 
                 // Update the state after processing each operation
@@ -48,14 +52,14 @@ const GraphVisualFlow = ({ operations }) => {
                 setEdges([...updatedEdges]);
 
                 // Wait for 250ms before processing the next operation
-                await delay(250);
+                await delay(500);
             }
-        }
+        };
         handleOperations();
-    },[operations]);
-    
+    }, []);
+
     return (
-        <div style={{height: "90vh", width: "100vw" }}>
+        <div style={{ height: '95vh', width: '100vw' }}>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
