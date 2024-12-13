@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import DataInput from "../components/DataInput";
 
 const HomePage = ({ onDataSubmit }) => {
