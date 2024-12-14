@@ -7,6 +7,8 @@ import ReactFlow, {
     useEdgesState,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import { SmartBezierEdge } from '@tisoap/react-flow-smart-edge'
+
 
 const GraphVisualFlow = ({ operations }) => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -20,6 +22,9 @@ const GraphVisualFlow = ({ operations }) => {
         edgesRef.current = edges;
     }, [nodes, edges]);
 
+    const edgeTypes = {
+        smart: SmartBezierEdge
+    }
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
     useEffect(() => {
@@ -31,7 +36,7 @@ const GraphVisualFlow = ({ operations }) => {
                 if (op.type === 'addNode') {
                     const newNode = {
                         id: op.id,
-                        position: op.position || { x: 100, y: 100 },
+                        position: op.position,
                         data: { label: op.label || `Node ${op.id}` },
                     };
                     updatedNodes.push(newNode);
@@ -48,6 +53,7 @@ const GraphVisualFlow = ({ operations }) => {
                         source: op.source,
                         target: op.target,
                         label: op.label || '',
+                        type: 'smart',
                     };
                     updatedEdges.push(newEdge);
                 } else if (op.type === 'deleteEdge') {
@@ -60,8 +66,6 @@ const GraphVisualFlow = ({ operations }) => {
                 edgesRef.current = updatedEdges;
                 setNodes([...updatedNodes]);
                 setEdges([...updatedEdges]);
-
-                await delay(500);
             }
         };
 
@@ -75,6 +79,7 @@ const GraphVisualFlow = ({ operations }) => {
                 edges={edges}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
+                edgeTypes={edgeTypes}
                 fitView
             >
                 <MiniMap />
