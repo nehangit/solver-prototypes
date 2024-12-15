@@ -1,7 +1,8 @@
 use {
     solvers_dto::auction::{Auction, Liquidity},
-    solvers_dto::solution::{Solution, Trade, Fulfillment, Interaction, LiquidityInteraction},
+    solvers_dto::solution::{Solution, Trade, Fulfillment, Interaction, LiquidityInteraction, Call},
     web3::types::{H160, U256},
+    bigdecimal::ToPrimitive,
     std::collections::HashMap,
 };
 
@@ -23,6 +24,8 @@ pub fn fill_with_onchain_liquidity(auction: Auction) -> Solution {
         post_interactions: Vec::new(),
         gas: None,
     };
+
+    let mut cumulative_gas: U256 = U256::zero();
 
     // Step 3: Iterate through orders and match against available liquidity
     for order in &auction.orders {
@@ -67,10 +70,11 @@ pub fn fill_with_onchain_liquidity(auction: Auction) -> Solution {
                         let trade = Trade::Fulfillment(Fulfillment {
                             order: order.uid,
                             executed_amount: order.sell_amount, // Fulfill the full sell amount
-                            fee: None,
+                            fee: Some(U256::from_dec_str(&(pool.fee.to_f64().unwrap() * (order.sell_amount.low_u64() as f64)).to_string()).expect("")),
                         });
 
                         solution.trades.push(trade);
+                        cumulative_gas += pool.gas_estimate;
 
                         // Add interaction to draw liquidity from this pool
                         let interaction = Interaction::Liquidity(LiquidityInteraction {
@@ -84,6 +88,23 @@ pub fn fill_with_onchain_liquidity(auction: Auction) -> Solution {
 
                         solution.interactions.push(interaction);
 
+                        // Add pre- and post-interactions
+                        for pre_interaction in &order.pre_interactions {
+                            solution.pre_interactions.push(Call {
+                                target: pre_interaction.target,
+                                value: pre_interaction.value,
+                                calldata: pre_interaction.call_data.clone(),
+                            });
+                        }
+
+                        for post_interaction in &order.post_interactions {
+                            solution.post_interactions.push(Call {
+                                target: post_interaction.target,
+                                value: post_interaction.value,
+                                calldata: post_interaction.call_data.clone(),
+                            });
+                        }
+
                         fulfilled = true;
                         break;
                     }
@@ -94,9 +115,14 @@ pub fn fill_with_onchain_liquidity(auction: Auction) -> Solution {
 
         if !fulfilled {
             // Order couldn't be fulfilled, skip
+            let hex_uid: String = order.uid.iter().map(|byte| format!("{:02x}", byte)).collect();
+            println!("Order '0x{}' not filled", hex_uid);
             continue;
         }
     }
+
+    // Set the gas for the solution
+    solution.gas = Some(cumulative_gas.as_u64());
 
     solution
 }
