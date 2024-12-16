@@ -78,10 +78,20 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
         .collect();
 
     // Find the pool with the highest `base_token_price_quote_token`
-    let highest_price_pool = matching_pools.into_iter()
-        .max_by(|a, b| a.attributes.base_token_price_quote_token
-            .partial_cmp(&b.attributes.base_token_price_quote_token)
-            .unwrap_or(std::cmp::Ordering::Equal));
+    let highest_price_pool = matching_pools.into_iter().max_by(|a, b| {
+        let a_base_token_id = &a.relationships.base_token.data.id;
+        let a_forward = if a_base_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_from)) {a.attributes.base_token_price_quote_token} else {a.attributes.quote_token_price_base_token};
+
+        let b_base_token_id = &b.relationships.base_token.data.id;
+        let b_forward = if b_base_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_from)) {b.attributes.base_token_price_quote_token} else {b.attributes.quote_token_price_base_token};
+        if a_forward > b_forward {
+            std::cmp::Ordering::Greater
+        } else if a_forward < b_forward {
+            std::cmp::Ordering::Less
+        } else {
+            std::cmp::Ordering::Equal
+        }
+    });
 
     // Return the result or an error if no matching pool is found
     highest_price_pool.ok_or(FetchPoolError::NoMatchingPools)
