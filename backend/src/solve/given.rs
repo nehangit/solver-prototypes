@@ -6,7 +6,10 @@ use {
     std::collections::HashMap,
 };
 
-pub fn fill_with_onchain_liquidity(auction: Auction) -> Solution {
+/*
+    Solves the auction using the given liquidity from the auction
+*/
+pub fn fill_with_given_liquidity(auction: Auction) -> Solution {
     // Step 1: Get clearing prices for tokens
     let clearing_prices = get_clearing_prices(&auction);
     println!("{:#?}", clearing_prices);

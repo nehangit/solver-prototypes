@@ -8,16 +8,15 @@ use solvers_dto::notification::Notification;
 use solvers_dto::solution::Solution;
 // use solvers::api::routes::solve::dto::solution::from_domain;
 
-// mod naive;
 mod structures;
 mod utils;
-mod token_swap;
-mod solver;
+mod solve;
 
 use structures::pools::{Pool, Pools};
-use token_swap::get_direct_swap_pool;
-use token_swap::get_intermediate_swap_pools;
+use utils::token_swap::get_direct_swap_pool;
+use utils::token_swap::get_intermediate_swap_pools;
 use utils::parse::json_to_struct;
+use solve::given::fill_with_given_liquidity;
 
 async fn get_hello() -> impl Responder {
     HttpResponse::Ok().json(json!({"message": "Hello, World!"}))
@@ -69,6 +68,6 @@ async fn main() -> std::io::Result<()> {
 
 fn main() {
     let auction: Auction = json_to_struct("data/onchain_liquidity.json");
-    let solution = solver::fill_with_onchain_liquidity(auction);
+    let solution = fill_with_given_liquidity(auction);
     println!("{:#?}", solution);
 }
