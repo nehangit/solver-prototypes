@@ -1,6 +1,7 @@
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use log::info; // Logging macro
 use serde_json::json;
+use serde_json::to_string_pretty;
 
 // use solvers::api::routes::solve::dto::auction::to_domain;
 use solvers_dto::auction::Auction;
@@ -70,4 +71,7 @@ fn main() {
     let auction: Auction = json_to_struct("data/onchain_liquidity.json");
     let solution = fill_with_given_liquidity(auction);
     println!("{:#?}", solution);
+
+    let json = serde_json::to_string_pretty(&solution).unwrap();
+    println!("{}", json);
 }

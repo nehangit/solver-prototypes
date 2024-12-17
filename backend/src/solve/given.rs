@@ -73,7 +73,7 @@ pub fn fill_with_given_liquidity(auction: Auction) -> Solution {
                         let trade = Trade::Fulfillment(Fulfillment {
                             order: order.uid,
                             executed_amount: order.sell_amount, // Fulfill the full sell amount
-                            fee: Some(U256::from_dec_str(&(pool.fee.to_f64().unwrap() * (order.sell_amount.low_u64() as f64)).to_string()).expect("")),
+                            fee: Some(U256::from_dec_str(&(pool.fee.to_f64().unwrap() * (order.sell_amount.low_u64() as f64)).floor().to_string()).expect("")),
                         });
 
                         solution.trades.push(trade);
