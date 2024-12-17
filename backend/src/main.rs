@@ -72,6 +72,9 @@ fn main() {
     let solution = fill_with_given_liquidity(auction);
     println!("{:#?}", solution);
 
-    let json = serde_json::to_string_pretty(&solution).unwrap();
-    println!("{}", json);
+    let sol_json = serde_json::to_string_pretty(&solution.0).unwrap();
+    println!("{}", sol_json);
+
+    let edge_json = serde_json::to_string_pretty(&solution.1).unwrap();
+    println!("{}", edge_json);
 }

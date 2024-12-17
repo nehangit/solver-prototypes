@@ -1,6 +1,7 @@
 use {
     solvers_dto::auction::{Auction, Liquidity},
     solvers_dto::solution::{Solution, Trade, Fulfillment, Interaction, LiquidityInteraction, Call},
+    crate::structures::edge::Edge,
     web3::types::{H160, U256},
     bigdecimal::ToPrimitive,
     std::collections::HashMap,
@@ -9,7 +10,7 @@ use {
 /*
     Solves the auction using the given liquidity from the auction
 */
-pub fn fill_with_given_liquidity(auction: Auction) -> Solution {
+pub fn fill_with_given_liquidity(auction: Auction) -> (Solution, Vec<Edge>) {
     // Step 1: Get clearing prices for tokens
     let clearing_prices = get_clearing_prices(&auction);
     println!("{:#?}", clearing_prices);
@@ -29,6 +30,9 @@ pub fn fill_with_given_liquidity(auction: Auction) -> Solution {
     };
 
     let mut cumulative_gas: U256 = U256::zero();
+
+    // Initialize vector of directed edges (from, to)
+    let mut graph_edges: Vec<Edge>= Vec::new();
 
     // Step 3: Iterate through orders and match against available liquidity
     for order in &auction.orders {
@@ -108,6 +112,33 @@ pub fn fill_with_given_liquidity(auction: Auction) -> Solution {
                             });
                         }
 
+                        // add (owner address, pool) as an edge
+                        let owner_address = extract_owner_address_from_uid(&order.uid);
+                        graph_edges.push(Edge {
+                            from: h160_to_string(&owner_address),
+                            to: pool.id.clone(),
+                            amount: order.sell_amount,
+                            token: order.sell_token,
+                        });
+                        
+                        // if 'receiver' is set (i.e. owner wants to redirect their trade) there should be an edge (pool, receiver)
+                        // otherwise make an edge (pool, owner address)
+                        if let Some(receiver) = order.receiver {
+                            graph_edges.push(Edge {
+                                from: pool.id.clone(),
+                                to: h160_to_string(&receiver),
+                                amount: order.buy_amount,
+                                token: order.buy_token,
+                            });
+                        } else {
+                            graph_edges.push(Edge {
+                                from: pool.id.clone(),
+                                to: h160_to_string(&owner_address),
+                                amount: order.buy_amount,
+                                token: order.buy_token,
+                            });
+                        }
+
                         fulfilled = true;
                         break;
                     }
@@ -127,7 +158,7 @@ pub fn fill_with_given_liquidity(auction: Auction) -> Solution {
     // Set the gas for the solution
     solution.gas = Some(cumulative_gas.as_u64());
 
-    solution
+    (solution, graph_edges)
 }
 
 pub fn get_clearing_prices(auction: &Auction) -> HashMap<H160, f64> {
@@ -175,4 +206,12 @@ pub fn get_clearing_prices(auction: &Auction) -> HashMap<H160, f64> {
     }
 
     clearing_prices
+}
+
+fn extract_owner_address_from_uid(uid: &[u8; 56]) -> H160 {
+    H160::from_slice(&uid[32..52])
+}
+
+fn h160_to_string(address: &H160) -> String {
+    format!("0x{:x}", address)
 }

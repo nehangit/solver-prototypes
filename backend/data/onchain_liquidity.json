@@ -35,7 +35,6 @@
             "feePolicies": [],
             "validTo": 0,
             "kind": "sell",
-            "receiver": "0x0000000000000000000000000000000000000000",
             "owner": "0x0000000000000000000000000000000000000000",
             "partiallyFillable": true,
             "preInteractions": [
@@ -75,7 +74,6 @@
             "feePolicies": [],
             "validTo": 0,
             "kind": "sell",
-            "receiver": "0x0000000000000000000000000000000000000000",
             "owner": "0x0000000000000000000000000000000000000000",
             "partiallyFillable": true,
             "preInteractions": [
@@ -115,7 +113,6 @@
             "feePolicies": [],
             "validTo": 0,
             "kind": "sell",
-            "receiver": "0x0000000000000000000000000000000000000000",
             "owner": "0x0000000000000000000000000000000000000000",
             "partiallyFillable": true,
             "preInteractions": [],
@@ -138,7 +135,6 @@
             "feePolicies": [],
             "validTo": 0,
             "kind": "sell",
-            "receiver": "0x0000000000000000000000000000000000000000",
             "owner": "0x0000000000000000000000000000000000000000",
             "partiallyFillable": true,
             "preInteractions": [],
