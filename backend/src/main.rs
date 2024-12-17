@@ -53,6 +53,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .wrap(Logger::default())
+            .app_data(web::PayloadConfig::default().limit(50 * 1024 * 1024))
             .route("/", web::get().to(get_hello))
             .route("/notify", web::post().to(post_notify))
             .route("/solve", web::post().to(post_data))
