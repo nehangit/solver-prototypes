@@ -24,18 +24,22 @@ export const translateData = (data) => {
         { type: 'addEdge', source: '3', target: '2', label: 'Edge 3-2' },
         { type: 'deleteEdge', id: 'e2-3' },
     ];
-    if (data["asset_changes"]){
+
+    if (data["asset_changes"]) {
         return generateOperationsFromAssetChanges(data);
     }
-    // Check if data is auction solution here and generate operations in a separate function
     
+    if (data["prices"] && data["trades"] && data["interactions"]) {
+        return generateOperationsFromAuctionSolution(data);
+    }
+
     return defOps;
 };
 
 const generateOperationsFromAssetChanges = (assetChanges) => {
-    const nodesSet = new Set(); 
+    const nodesSet = new Set();
     const operations = [];
-    assetChanges  = assetChanges["asset_changes"];
+    assetChanges = assetChanges["asset_changes"];
     assetChanges.forEach((change) => {
         const { from, to, token_info, amount, type } = change;
 
@@ -45,7 +49,7 @@ const generateOperationsFromAssetChanges = (assetChanges) => {
                 type: "addNode",
                 id: from,
                 label: `Wallet: ${from}`,
-                position: { x: Math.random() * 800, y: Math.random() * 600 }, 
+                position: { x: Math.random() * 800, y: Math.random() * 600 },
             });
         }
 
@@ -55,7 +59,7 @@ const generateOperationsFromAssetChanges = (assetChanges) => {
                 type: "addNode",
                 id: to,
                 label: `Wallet: ${to}`,
-                position: { x: Math.random() * 800, y: Math.random() * 600 }, 
+                position: { x: Math.random() * 800, y: Math.random() * 600 },
             });
         }
 
@@ -73,4 +77,82 @@ const generateOperationsFromAssetChanges = (assetChanges) => {
     return operations;
 };
 
+const generateOperationsFromAuctionSolution = (data) => {
+    const operations = [];
+    const nodesSet = new Set();
 
+    // Add nodes and edges for prices
+    Object.entries(data.prices).forEach(([token, price]) => {
+        if (!nodesSet.has(token)) {
+            nodesSet.add(token);
+            operations.push({
+                type: "addNode",
+                id: token,
+                label: `Token: ${token}`,
+                position: { x: Math.random() * 800, y: Math.random() * 600 },
+            });
+        }
+        operations.push({
+            type: "addEdge",
+            id: `price-${token}`,
+            source: "root",
+            target: token,
+            label: `Price: ${price}`,
+        });
+    });
+
+    // Add nodes and edges for trades
+    data.trades.forEach((trade, index) => {
+        const tradeId = `trade-${index}`;
+        operations.push({
+            type: "addNode",
+            id: tradeId,
+            label: `Trade: ${trade.executedAmount}`,
+            position: { x: Math.random() * 800, y: Math.random() * 600 },
+        });
+
+        operations.push({
+            type: "addEdge",
+            id: `trade-edge-${index}`,
+            source: tradeId,
+            target: trade.order,
+            label: `Fee: ${trade.fee}`,
+        });
+    });
+
+    // Add nodes and edges for interactions
+    data.interactions.forEach((interaction, index) => {
+        const inputToken = interaction.inputToken;
+        const outputToken = interaction.outputToken;
+
+        if (!nodesSet.has(inputToken)) {
+            nodesSet.add(inputToken);
+            operations.push({
+                type: "addNode",
+                id: inputToken,
+                label: `Token: ${inputToken}`,
+                position: { x: Math.random() * 800, y: Math.random() * 600 },
+            });
+        }
+
+        if (!nodesSet.has(outputToken)) {
+            nodesSet.add(outputToken);
+            operations.push({
+                type: "addNode",
+                id: outputToken,
+                label: `Token: ${outputToken}`,
+                position: { x: Math.random() * 800, y: Math.random() * 600 },
+            });
+        }
+
+        operations.push({
+            type: "addEdge",
+            id: `interaction-${index}`,
+            source: inputToken,
+            target: outputToken,
+            label: `Input: ${interaction.inputAmount}, Output: ${interaction.outputAmount}`,
+        });
+    });
+
+    return operations;
+};
