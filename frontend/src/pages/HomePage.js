@@ -30,6 +30,8 @@ const HomePage = ({ onDataSubmit }) => {
                 return response.json();
             })
             .then((solution) => {
+                // solution = solution.solutions[0];
+                solution.auction_orders = data.orders;
                 onDataSubmit(solution);
                 navigate('/visualization');
             })
