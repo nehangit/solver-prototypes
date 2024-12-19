@@ -1,10 +1,10 @@
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use anyhow::Error;
 use log::info; // Logging macro
 use serde_json::json;
 use serde_json::to_string_pretty;
 use std::sync::{Arc, Mutex};
 use tokio::time::{sleep, Duration};
-use anyhow::Error;
 
 // use solvers::api::routes::solve::dto::auction::to_domain;
 use solvers_dto::auction::Auction;
@@ -12,16 +12,16 @@ use solvers_dto::notification::Notification;
 use solvers_dto::solution::Solution;
 // use solvers::api::routes::solve::dto::solution::from_domain;
 
+mod solve;
 mod structures;
 mod utils;
-mod solve;
 
-use structures::pools::{Pool, Pools};
-use structures::gas_price::{GasOracleResponse, GasPrices};
-use utils::token_swap::get_direct_swap_pool;
-use utils::parse::json_to_struct;
 use solve::given::fill_with_given_liquidity;
 use solve::onchain::fill_with_uniswap_liquidity;
+use structures::gas_price::{GasOracleResponse, GasPrices};
+use structures::pools::{Pool, Pools};
+use utils::parse::json_to_struct;
+use utils::token_swap::get_direct_swap_pool;
 
 async fn get_hello() -> impl Responder {
     HttpResponse::Ok().json(json!({"message": "Hello, World!"}))
@@ -92,7 +92,7 @@ async fn main() {
     let gas_price_lock = gas_price.lock().unwrap();
     if let Some(gas_prices) = &*gas_price_lock {
         let solution = fill_with_uniswap_liquidity(auction, gas_prices.clone()).await;
-        println!("{:#?}", solution);
+        println!("{:#?}", solution.0);
 
         // let sol_json = serde_json::to_string_pretty(&solution.0).unwrap();
         // println!("{}", sol_json);
@@ -103,8 +103,6 @@ async fn main() {
         println!("Gas price not available yet");
     }
 }
-
-
 
 /// Fetches gas prices from Etherscan
 async fn fetch_gas_prices(api_key: &str) -> Result<GasPrices, Error> {
