@@ -98,14 +98,14 @@ const generateOperationsFromAuctionSolution = (data) => {
         if(orderKind === "buy") {
             inToken = order.sellToken;
             outToken = order.buyToken;
-            inAmount = order.sellAmount;
-            outAmount = order.buyAmount;
+            inAmount = trade.executedAmount;
+            outAmount = inAmount * execPrice;
         }
         else {
             inToken = order.buyToken;
             outToken = order.sellToken;
-            inAmount = order.buyAmount;
-            outAmount = order.sellAmount;
+            outAmount = trade.executedAmount;
+            inAmount = outAmount / execPrice;
         }
 
         // Add order node
@@ -155,8 +155,8 @@ const generateOperationsFromAuctionSolution = (data) => {
             operations.push({
                 type: "addEdge",
                 id: `owner-edge-${index}`,
-                source: orderId,
-                target: order.owner,
+                source: order.owner,
+                target: orderId,
                 label: `Token: ${outToken}\nAmount: ${outAmount}`,
             });
         }
