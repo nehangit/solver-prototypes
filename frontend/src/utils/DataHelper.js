@@ -91,16 +91,21 @@ const generateOperationsFromAuctionSolution = (data) => {
         else { // trade.kind === "jit"
             order = trade.order
         }
-
-        // Add trade node
-        if (!nodesSet.has(tradeId)) {
-            nodesSet.add(tradeId);
-            operations.push({
-                type: "addNode",
-                id: tradeId,
-                label: `Trade (${trade.kind})\nExecuted: ${trade.executedAmount}`,
-                position: { x: Math.random() * 800, y: Math.random() * 600 },
-            });
+        let orderKind = order.kind;
+        let inToken, outToken, inAmount, outAmount;
+        let limitPrice = order.sellAmount / order.buyAmount;
+        let execPrice = data.prices[order.sellToken] / data.prices[order.buyToken];
+        if(orderKind === "buy") {
+            inToken = order.sellToken;
+            outToken = order.buyToken;
+            inAmount = order.sellAmount;
+            outAmount = order.buyAmount;
+        }
+        else {
+            inToken = order.buyToken;
+            outToken = order.sellToken;
+            inAmount = order.buyAmount;
+            outAmount = order.sellAmount;
         }
 
         // Add order node
@@ -110,19 +115,10 @@ const generateOperationsFromAuctionSolution = (data) => {
             operations.push({
                 type: "addNode",
                 id: orderId,
-                label: `Order\nSell: ${order.sellToken}\nBuy: ${order.buyToken}`,
+                label: `${orderKind} order\nLimit Price: ${limitPrice}\nExecuted Price: ${execPrice}`,
                 position: { x: Math.random() * 800, y: Math.random() * 600 },
             });
         }
-
-        // Add edge from trade to order
-        operations.push({
-            type: "addEdge",
-            id: `trade-edge-${index}`,
-            source: tradeId,
-            target: orderId,
-            label: `Fee: ${trade.fee}`,
-        });
 
         // Add nodes and edges for the receiver and owner (if applicable)
         if (order.receiver) {
@@ -141,7 +137,7 @@ const generateOperationsFromAuctionSolution = (data) => {
                 id: `receiver-edge-${index}`,
                 source: orderId,
                 target: order.receiver,
-                label: "Receiver",
+                label: `Token: ${inToken}\nAmount: ${inAmount}`,
             });
         }
 
@@ -161,7 +157,7 @@ const generateOperationsFromAuctionSolution = (data) => {
                 id: `owner-edge-${index}`,
                 source: orderId,
                 target: order.owner,
-                label: "Owner",
+                label: `Token: ${outToken}\nAmount: ${outAmount}`,
             });
         }
     });
@@ -174,7 +170,7 @@ const generateOperationsFromAuctionSolution = (data) => {
             operations.push({
                 type: "addNode",
                 id: interaction.from,
-                label: `Address\n${interaction.from}`,
+                label: `${interaction.from}`,
                 position: { x: Math.random() * 800, y: Math.random() * 600 },
             });
         }
@@ -185,7 +181,7 @@ const generateOperationsFromAuctionSolution = (data) => {
             operations.push({
                 type: "addNode",
                 id: interaction.to,
-                label: `Pool/Address\n${interaction.to}`,
+                label: `${interaction.to}`,
                 position: { x: Math.random() * 800, y: Math.random() * 600 },
             });
         }
@@ -196,7 +192,7 @@ const generateOperationsFromAuctionSolution = (data) => {
             id: `liquidity-edge-${index}`,
             source: interaction.from,
             target: interaction.to,
-            label: `Amount: ${interaction.amount}\nToken: ${interaction.token}`,
+            label: `Token: ${interaction.token}\nAmount: ${interaction.amount}`,
         });
     });
 
