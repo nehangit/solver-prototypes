@@ -2,6 +2,8 @@ use serde::Deserialize;
 use serde_with::{serde_as, DisplayFromStr};
 use crate::utils::serialization::HexOrDecimalU256;
 use web3::types::{H160, U256};
+use bigdecimal::BigDecimal;
+use chrono::Utc;
 
 #[derive(Debug, Deserialize)]
 pub struct Pools {
@@ -21,44 +23,44 @@ pub struct Pool {
 #[derive(Debug, Deserialize)]
 pub struct Attributes {
     #[serde_as(as = "DisplayFromStr")]
-    pub base_token_price_usd: f64,
+    pub base_token_price_usd: BigDecimal,
     #[serde_as(as = "DisplayFromStr")]
-    pub base_token_price_native_currency: f64,
+    pub base_token_price_native_currency: BigDecimal,
     #[serde_as(as = "DisplayFromStr")]
-    pub quote_token_price_usd: f64,
+    pub quote_token_price_usd: BigDecimal,
     #[serde_as(as = "DisplayFromStr")]
-    pub quote_token_price_native_currency: f64,
+    pub quote_token_price_native_currency: BigDecimal,
     #[serde_as(as = "DisplayFromStr")]
-    pub base_token_price_quote_token: f64,
+    pub base_token_price_quote_token: BigDecimal,
     #[serde_as(as = "DisplayFromStr")]
-    pub quote_token_price_base_token: f64,
+    pub quote_token_price_base_token: BigDecimal,
     pub address: H160,
     pub name: String,
-    pub pool_created_at: chrono::DateTime<chrono::Utc>,
+    pub pool_created_at: chrono::DateTime<Utc>,
     #[serde_as(as = "DisplayFromStr")]
-    pub token_price_usd: f64,
+    pub token_price_usd: BigDecimal,
     #[serde_as(as = "HexOrDecimalU256")]
     pub fdv_usd: U256,
     #[serde_as(as = "DisplayFromStr")]
-    pub market_cap_usd: f64,
+    pub market_cap_usd: BigDecimal,
     pub price_change_percentage: PriceChangePercentage,
     pub transactions: Transactions,
     pub volume_usd: VolumeUsd,
     #[serde_as(as = "DisplayFromStr")]
-    pub reserve_in_usd: f64,
+    pub reserve_in_usd: BigDecimal,
 }
 
 #[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct PriceChangePercentage {
     #[serde_as(as = "DisplayFromStr")]
-    pub m5: f64,
+    pub m5: BigDecimal,
     #[serde_as(as = "DisplayFromStr")]
-    pub h1: f64,
+    pub h1: BigDecimal,
     #[serde_as(as = "DisplayFromStr")]
-    pub h6: f64,
+    pub h6: BigDecimal,
     #[serde_as(as = "DisplayFromStr")]
-    pub h24: f64,
+    pub h24: BigDecimal,
 }
 
 #[derive(Debug, Deserialize)]
@@ -70,25 +72,30 @@ pub struct Transactions {
     pub h24: TransactionDetail,
 }
 
+#[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct TransactionDetail {
-    pub buys: u32,
-    pub sells: u32,
-    pub buyers: u32,
-    pub sellers: u32,
+    #[serde_as(as = "DisplayFromStr")]
+    pub buys: U256,
+    #[serde_as(as = "DisplayFromStr")]
+    pub sells: U256,
+    #[serde_as(as = "DisplayFromStr")]
+    pub buyers: U256,
+    #[serde_as(as = "DisplayFromStr")]
+    pub sellers: U256,
 }
 
 #[serde_as]
 #[derive(Debug, Deserialize)]
 pub struct VolumeUsd {
     #[serde_as(as = "DisplayFromStr")]
-    pub m5: f64,
+    pub m5: BigDecimal,
     #[serde_as(as = "DisplayFromStr")]
-    pub h1: f64,
+    pub h1: BigDecimal,
     #[serde_as(as = "DisplayFromStr")]
-    pub h6: f64,
+    pub h6: BigDecimal,
     #[serde_as(as = "DisplayFromStr")]
-    pub h24: f64,
+    pub h24: BigDecimal,
 }
 
 #[derive(Debug, Deserialize)]
