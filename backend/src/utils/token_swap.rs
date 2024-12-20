@@ -145,9 +145,6 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
     // Read the entire response as text
     let text = response.text().await.unwrap_or_else(|_| "Could not read response body".to_string());
 
-    // Print the raw JSON for debugging
-    eprintln!("Raw JSON: {}", text);
-
     // Parse the JSON from the text
     let pools: Pools = match serde_json::from_str(&text) {
         Ok(p) => p,
@@ -158,23 +155,18 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
         }
     };
 
-    println!("Parsed Pools: {:?}", pools);
-    println!("kms");
-
     // Filter pools where the `quote_token` ID matches `token_to`
     let matching_pools: Vec<Pool> = pools.data.into_iter()
         .filter(|pool| {
             let base_token_id = &pool.relationships.base_token.data.id;
             let quote_token_id = &pool.relationships.quote_token.data.id;
-            println!("{}", base_token_id);
-            println!("{}", quote_token_id);
-            println!("{}", &format!("eth_{}", token_to));
+            // println!("{}", base_token_id);
+            // println!("{}", quote_token_id);
+            // println!("{}", &format!("eth_{}", token_to));
             base_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_to)) ||
             quote_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_to))
         })
         .collect();
-
-    println!("here4");
 
     // Find the pool with the highest `base_token_price_quote_token`
     let highest_price_pool = matching_pools.into_iter().max_by(|a, b| {

@@ -79,13 +79,13 @@ pub struct Transactions {
 
 #[derive(Debug, Deserialize)]
 pub struct TxInterval {
-    #[serde(deserialize_with = "deserialize_u256")]
+    #[serde(deserialize_with = "deserialize_u256_from_int")]
     pub buys: U256,
-    #[serde(deserialize_with = "deserialize_u256")]
+    #[serde(deserialize_with = "deserialize_u256_from_int")]
     pub sells: U256,
-    #[serde(deserialize_with = "deserialize_u256")]
+    #[serde(deserialize_with = "deserialize_u256_from_int")]
     pub buyers: U256,
-    #[serde(deserialize_with = "deserialize_u256")]
+    #[serde(deserialize_with = "deserialize_u256_from_int")]
     pub sellers: U256,
 }
 
@@ -136,18 +136,16 @@ where
 {
     let val = serde_json::Value::deserialize(deserializer)?;
     match val {
+        serde_json::Value::Null => Ok(BigDecimal::from(0)),
         serde_json::Value::String(s) => {
             s.parse::<BigDecimal>().map_err(|e| serde::de::Error::custom(e.to_string()))
         }
         serde_json::Value::Number(n) => {
-            // Convert number to a string first
             let s = n.to_string();
             s.parse::<BigDecimal>()
                 .map_err(|e| serde::de::Error::custom(e.to_string()))
         }
-        _ => Err(serde::de::Error::custom(
-            "expected a numeric value (string or number)",
-        )),
+        _ => Err(serde::de::Error::custom("expected a numeric value (string or number)")),
     }
 }
 
@@ -157,10 +155,10 @@ where
 {
     let val = serde_json::Value::deserialize(deserializer)?;
     match val {
+        serde_json::Value::Null => Ok(U256::from(0)),
         serde_json::Value::String(s) => U256::from_dec_str(&s)
             .map_err(|_| serde::de::Error::custom("Failed to parse U256 from string")),
         serde_json::Value::Number(n) => {
-            // Convert the number to string then parse as U256
             let s = n.to_string();
             U256::from_dec_str(&s)
                 .map_err(|_| serde::de::Error::custom("Failed to parse U256 from number"))
@@ -175,7 +173,11 @@ fn deserialize_eth_id_to_h160<'de, D>(deserializer: D) -> Result<H160, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let s = String::deserialize(deserializer)?;
+    let s = match Option::<String>::deserialize(deserializer)? {
+        Some(s) => s,
+        None => return Ok(H160::zero()),
+    };
+
     if let Some(addr_str) = s.strip_prefix("eth_") {
         parse_h160(addr_str)
             .map_err(|e| serde::de::Error::custom(format!("Failed to parse H160: {}", e)))
@@ -190,7 +192,11 @@ fn deserialize_h160<'de, D>(deserializer: D) -> Result<H160, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let s = String::deserialize(deserializer)?;
+    let s = match Option::<String>::deserialize(deserializer)? {
+        Some(s) => s,
+        None => return Ok(H160::zero()),
+    };
+
     parse_h160(&s)
         .map_err(|e| serde::de::Error::custom(format!("Failed to parse H160: {}", e)))
 }
@@ -199,9 +205,36 @@ fn parse_h160(s: &str) -> Result<H160, String> {
     let hex_str = s.strip_prefix("0x").unwrap_or(s);
     let bytes = hex::decode(hex_str).map_err(|e| format!("Hex decode error: {}", e))?;
     if bytes.len() != 20 {
-        return Err(format!("Invalid H160 length: expected 20 bytes, got {}", bytes.len()));
+        return Err(format!(
+            "Invalid H160 length: expected 20 bytes, got {}",
+            bytes.len()
+        ));
     }
     let mut arr = [0u8; 20];
     arr.copy_from_slice(&bytes);
     Ok(H160(arr))
+}
+
+fn deserialize_u256_from_int<'de, D>(deserializer: D) -> Result<U256, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let val = serde_json::Value::deserialize(deserializer)?;
+    match val {
+        serde_json::Value::Null => Ok(U256::from(0)),
+        serde_json::Value::Number(n) => {
+            if let Some(u) = n.as_u64() {
+                Ok(U256::from(u))
+            } else {
+                // If we encounter a floating number or something non-integer-like,
+                // we could fall back to a default:
+                Ok(U256::from(0))
+            }
+        }
+        serde_json::Value::String(s) => {
+            U256::from_dec_str(&s)
+                .map_err(|_| serde::de::Error::custom("Failed to parse U256 from string"))
+        }
+        _ => Ok(U256::from(0)),
+    }
 }
