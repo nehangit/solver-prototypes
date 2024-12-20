@@ -1,5 +1,5 @@
 [package]
-name = "backend"
+name = "solverevlos"
 version = "0.1.0"
 edition = "2021"
 
@@ -12,10 +12,12 @@ env_logger = "0.10"
 solvers-dto = { git = "https://github.com/nehangit/services", subdir = "crates/solvers-dto" }
 solvers = { git = "https://github.com/nehangit/services", subdir = "crates/solvers" }
 chrono = "0.4.38"
+primitive-types = "0.12"
 web3 = "0.19.0"
 serde_with = "3.11.0"
 reqwest = { version = "^0.11", features = ["json", "default-tls"] }
 thiserror = "1.0"
+number = "0.0.1"
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread", "full"] }
 bigdecimal = { version = "0.4.7", features = ["serde"] }
 anyhow = "1"

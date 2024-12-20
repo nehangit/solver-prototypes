@@ -1,0 +1,24 @@
+meta {
+  name: Notify Simple Test
+  type: http
+  seq: 2
+}
+
+post {
+  url: https://solverevlos-1c1424a06917.herokuapp.com/notify
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "auctionId": "0",
+    "solutionId": 0,
+    "kind": "timeout",
+    "additionalProp1": {}
+  }
+}
+
+assert {
+  res.status: eq 200
+}
