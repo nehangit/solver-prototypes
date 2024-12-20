@@ -93,21 +93,14 @@ async fn main() {
 
     let gas_price_lock = gas_price.lock().unwrap();
     if let Some(gas_prices) = &*gas_price_lock {
-        if let Ok(pool) = get_direct_swap_pool("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2").await {
-            println!("{:#?}", pool);
-        } else {
-            println!("guh");
-        }
-       
+        let solution = fill_with_uniswap_liquidity(auction, gas_prices.clone()).await;
+        println!("{:#?}", solution.0);
 
-        // let solution = fill_with_uniswap_liquidity(auction, gas_prices.clone()).await;
-        // println!("{:#?}", solution.0);
+        let sol_json = serde_json::to_string_pretty(&solution.0).unwrap();
+        println!("{}", sol_json);
 
-        // let sol_json = serde_json::to_string_pretty(&solution.0).unwrap();
-        // println!("{}", sol_json);
-
-        // let edge_json = serde_json::to_string_pretty(&solution.1).unwrap();
-        // println!("{}", edge_json);
+        let edge_json = serde_json::to_string_pretty(&solution.1).unwrap();
+        println!("{}", edge_json);
     } else {
         println!("Gas price not available yet");
     }
