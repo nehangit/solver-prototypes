@@ -1,0 +1,50 @@
+[
+    {
+        "from": "0x7854163b1b0d24e77dca702b97b5cc33e0f83dcb",
+        "to": "1111/WETH v2",
+        "amount": "0x64",
+        "token": "0x1111111111111111111111111111111111111111"
+    },
+    {
+        "from": "1111/WETH v2",
+        "to": "0x7854163b1b0d24e77dca702b97b5cc33e0f83dcb",
+        "amount": "0xc8",
+        "token": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+    },
+    {
+        "from": "0x80258ec399bcee59340d9bf4d80cb76f4b66b045",
+        "to": "2222/WETH",
+        "amount": "0x64",
+        "token": "0x2222222222222222222222222222222222222222"
+    },
+    {
+        "from": "2222/WETH",
+        "to": "0x80258ec399bcee59340d9bf4d80cb76f4b66b045",
+        "amount": "0xc8",
+        "token": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+    },
+    {
+        "from": "0xf5ecf40c77b9ff0ef5bbf4ed667b4d355037e3f9",
+        "to": "1111/2222",
+        "amount": "0x96",
+        "token": "0x2222222222222222222222222222222222222222"
+    },
+    {
+        "from": "1111/2222",
+        "to": "0xf5ecf40c77b9ff0ef5bbf4ed667b4d355037e3f9",
+        "amount": "0x12c",
+        "token": "0x1111111111111111111111111111111111111111"
+    },
+    {
+        "from": "0x8d7cb49dbdf81cc77ea6c2a9eb82cdb57df1b28c",
+        "to": "2222/WETH",
+        "amount": "0xfa",
+        "token": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+    },
+    {
+        "from": "2222/WETH",
+        "to": "0x8d7cb49dbdf81cc77ea6c2a9eb82cdb57df1b28c",
+        "amount": "0x1f4",
+        "token": "0x2222222222222222222222222222222222222222"
+    }
+]

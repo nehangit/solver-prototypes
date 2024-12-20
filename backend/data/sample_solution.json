@@ -1,0 +1,113 @@
+{
+    "id": 12345,
+    "prices": {
+        "0x1111111111111111111111111111111111111111": "2",
+        "0x2222222222222222222222222222222222222222": "2",
+        "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2": "1"
+    },
+    "trades": [
+        {
+            "kind": "fulfillment",
+            "order": "0x30cff40d9f60caa68a37f0ee73253ad6ad72b45580c945fe3ab67596476937197854163b1b0d24e77dca702b97b5cc33e0f83dcb626122a6",
+            "executedAmount": "100",
+            "fee": "1337"
+        },
+        {
+            "kind": "fulfillment",
+            "order": "0x2be845e2be6d722a80895d5f69b752bc06ffaadf5d624f550ec566e97ccfd13080258ec399bcee59340d9bf4d80cb76f4b66b045fb5080ef",
+            "executedAmount": "100",
+            "fee": "1337"
+        },
+        {
+            "kind": "fulfillment",
+            "order": "0x45be7f7c8ab1fa92efad9cb6d6e82a3d84f772aa2ecb4e511179fae6b6b5bcddf5ecf40c77b9ff0ef5bbf4ed667b4d355037e3f91b6898b0",
+            "executedAmount": "150",
+            "fee": "1495"
+        },
+        {
+            "kind": "fulfillment",
+            "order": "0x7eabcfb1d9a30cfe4c4b88308e12b6c1d873f3b1f6f1b5d7079a1c10dced8d9e8d7cb49dbdf81cc77ea6c2a9eb82cdb57df1b28c12345678",
+            "executedAmount": "250",
+            "fee": "3342"
+        }
+    ],
+    "preInteractions": [
+        {
+            "kind": "Call",
+            "target": "0x1111111111111111111111111111111111111111",
+            "value": "0xde0b6b3a7640000",
+            "callData": "0xabcdef"
+        },
+        {
+            "kind": "Call",
+            "target": "0x2222222222222222222222222222222222222222",
+            "value": "0x1bc16d674ec80000",
+            "callData": "0x123456"
+        },
+        {
+            "kind": "Call",
+            "target": "0x1111111111111111111111111111111111111111",
+            "value": "0xde0b6b3a7640000",
+            "callData": "0xabcdef"
+        },
+        {
+            "kind": "Call",
+            "target": "0x2222222222222222222222222222222222222222",
+            "value": "0x1bc16d674ec80000",
+            "callData": "0x123456"
+        }
+    ],
+    "interactions": [
+        {
+            "kind": "liquidity",
+            "internalize": false,
+            "id": "1111/WETH v2",
+            "inputToken": "0x1111111111111111111111111111111111111111",
+            "outputToken": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+            "inputAmount": "100",
+            "outputAmount": "200"
+        },
+        {
+            "kind": "liquidity",
+            "internalize": false,
+            "id": "2222/WETH",
+            "inputToken": "0x2222222222222222222222222222222222222222",
+            "outputToken": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+            "inputAmount": "100",
+            "outputAmount": "200"
+        },
+        {
+            "kind": "liquidity",
+            "internalize": false,
+            "id": "1111/2222",
+            "inputToken": "0x2222222222222222222222222222222222222222",
+            "outputToken": "0x1111111111111111111111111111111111111111",
+            "inputAmount": "150",
+            "outputAmount": "300"
+        },
+        {
+            "kind": "liquidity",
+            "internalize": false,
+            "id": "2222/WETH",
+            "inputToken": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+            "outputToken": "0x2222222222222222222222222222222222222222",
+            "inputAmount": "250",
+            "outputAmount": "500"
+        }
+    ],
+    "postInteractions": [
+        {
+            "kind": "Call",
+            "target": "0x2222222222222222222222222222222222222222",
+            "value": "0xd80",
+            "callData": "0x987654"
+        },
+        {
+            "kind": "Call",
+            "target": "0x2222222222222222222222222222222222222222",
+            "value": "0xd80",
+            "callData": "0x987654"
+        }
+    ],
+    "gas": 3703713670
+}
