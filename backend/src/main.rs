@@ -74,7 +74,7 @@ async fn main() -> std::io::Result<()> {
 #[tokio::main]
 async fn main() {
     // Replace with your Etherscan API key
-    let api_key = "API_KEY".to_string();
+    let api_key = "BQAT6JY5DAY3MJF8FY7PMHKACRPXM19JB1".to_string();
 
     // Shared gas_price variable
     let gas_price = Arc::new(Mutex::new(None));
@@ -87,12 +87,21 @@ async fn main() {
         update_gas_price(gas_price_clone, api_key).await;
     });
 
-    let auction: Auction = json_to_struct("data/onchain_liquidity.json");
+    sleep(Duration::from_millis(1000)).await;
+
+    let auction: Auction = json_to_struct("data/real_sample.json");
 
     let gas_price_lock = gas_price.lock().unwrap();
     if let Some(gas_prices) = &*gas_price_lock {
-        let solution = fill_with_uniswap_liquidity(auction, gas_prices.clone()).await;
-        println!("{:#?}", solution);
+        if let Ok(pool) = get_direct_swap_pool("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2").await {
+            println!("{:#?}", pool);
+        } else {
+            println!("guh");
+        }
+       
+
+        // let solution = fill_with_uniswap_liquidity(auction, gas_prices.clone()).await;
+        // println!("{:#?}", solution);
 
         // let sol_json = serde_json::to_string_pretty(&solution.0).unwrap();
         // println!("{}", sol_json);
@@ -137,7 +146,7 @@ async fn update_gas_price(gas_price: Arc<Mutex<Option<GasPrices>>>, api_key: Str
             }
         }
 
-        // Sleep for 0.4 seconds before the next fetch
-        sleep(Duration::from_millis(400)).await;
+        // Sleep for 0.3 seconds before the next fetch
+        sleep(Duration::from_millis(300)).await;
     }
 }

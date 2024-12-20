@@ -1,0 +1,162 @@
+{
+    "id": "12345",
+    "tokens": {
+        "0xdef1ca1fb7fbcdc777520aa7f396b4e015f497ab": {
+            "decimals": 0,
+            "symbol": "COW",
+            "referencePrice": "0",
+            "availableBalance": "1234567890",
+            "trusted": true
+        },
+        "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48": {
+            "decimals": 0,
+            "symbol": "USDC",
+            "referencePrice": "0",
+            "availableBalance": "1234567890",
+            "trusted": true
+        },
+        "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2": {
+            "decimals": 0,
+            "symbol": "WETH",
+            "referencePrice": "0",
+            "availableBalance": "1234567890",
+            "trusted": true
+        }
+    },
+    "orders": [
+        {
+            "uid": "0x30cff40d9f60caa68a37f0ee73253ad6ad72b45580c945fe3ab67596476937197854163b1b0d24e77dca702b97b5cc33e0f83dcb626122a6",
+            "sellToken": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+            "buyToken": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+            "sellAmount": "100",
+            "fullSellAmount": "100",
+            "buyAmount": "200",
+            "fullBuyAmount": "200",
+            "feePolicies": [],
+            "validTo": 0,
+            "kind": "sell",
+            "owner": "0x0000000000000000000000000000000000000001",
+            "partiallyFillable": true,
+            "preInteractions": [
+                {
+                    "target": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+                    "value": "1000000000000000000",
+                    "callData": "0xabcdef"
+                },
+                {
+                    "target": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+                    "value": "2000000000000000000",
+                    "callData": "0x123456"
+                }
+            ],
+            "postInteractions": [
+                {
+                    "target": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+                    "value": "3456",
+                    "callData": "0x987654"
+                }
+            ],
+            "sellTokenSource": "erc20",
+            "buyTokenDestination": "erc20",
+            "class": "market",
+            "appData": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "signingScheme": "eip712",
+            "signature": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+            "uid": "0x2be845e2be6d722a80895d5f69b752bc06ffaadf5d624f550ec566e97ccfd13080258ec399bcee59340d9bf4d80cb76f4b66b045fb5080ef",
+            "sellToken": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+            "buyToken": "0xdef1ca1fb7fbcdc777520aa7f396b4e015f497ab",
+            "sellAmount": "100",
+            "fullSellAmount": "100",
+            "buyAmount": "200",
+            "fullBuyAmount": "200",
+            "feePolicies": [],
+            "validTo": 0,
+            "kind": "sell",
+            "owner": "0x0000000000000000000000000000000000000000",
+            "partiallyFillable": true,
+            "preInteractions": [
+                {
+                    "target": "0x1111111111111111111111111111111111111111",
+                    "value": "1000000000000000000",
+                    "callData": "0xabcdef"
+                },
+                {
+                    "target": "0x2222222222222222222222222222222222222222",
+                    "value": "2000000000000000000",
+                    "callData": "0x123456"
+                }
+            ],
+            "postInteractions": [
+                {
+                    "target": "0x2222222222222222222222222222222222222222",
+                    "value": "3456",
+                    "callData": "0x987654"
+                }
+            ],
+            "sellTokenSource": "erc20",
+            "buyTokenDestination": "erc20",
+            "class": "market",
+            "appData": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "signingScheme": "eip712",
+            "signature": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+    ],
+    "liquidity": [
+        {
+            "kind": "constantProduct",
+            "tokens": {
+                "0x2222222222222222222222222222222222222222": {
+                    "balance": "1000"
+                },
+                "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2": {
+                    "balance": "2000"
+                }
+            },
+            "fee": "13.37",
+            "router": "0x0000000000000000000000000000000000000000",
+            "id": "2222/WETH",
+            "address": "0x0000000000000000000000000000000000000000",
+            "gasEstimate": "1234567890"
+        },
+        {
+            "kind": "constantProduct",
+            "tokens": {
+                "0x1111111111111111111111111111111111111111": {
+                    "balance": "100"
+                },
+                "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2": {
+                    "balance": "200"
+                }
+            },
+            "fee": "13.37",
+            "router": "0x0000000000000000000000000000000000000000",
+            "id": "1111/WETH v2",
+            "address": "0x0000000000000000000000000000000000000000",
+            "gasEstimate": "1234567890"
+        },
+        {
+            "kind": "constantProduct",
+            "tokens": {
+                "0x1111111111111111111111111111111111111111": {
+                    "balance": "2000"
+                },
+                "0x2222222222222222222222222222222222222222": {
+                    "balance": "2000"
+                }
+            },
+            "fee": "9.97",
+            "router": "0x0000000000000000000000000000000000000000",
+            "id": "1111/2222",
+            "address": "0x0000000000000000000000000000000000000000",
+            "gasEstimate": "10000"
+        }
+        
+    ],
+    "effectiveGasPrice": "1234567890",
+    "deadline": "1970-01-01T00:00:00.000Z",
+    "surplusCapturingJitOrderOwners": [
+        "0x0000000000000000000000000000000000000000"
+    ]
+}

@@ -46,6 +46,8 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
     // Make the GET request
     let response = client.get(&url).send().await;
 
+    println!("here");
+
     // Handle potential network errors
     let response = match response {
         Ok(resp) => resp,
@@ -54,6 +56,8 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
             return Err(FetchPoolError::RequestError(err));
         }
     };
+
+    println!("here2");
 
     // Check if the response status is a success
     if !response.status().is_success() {
@@ -64,18 +68,27 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
         return Err(FetchPoolError::HttpError(format!("Status: {}, Body: {}", status, text)));
     }
 
+    println!("here3");
+
     // Deserialize the response into `Pools`
     let pools: Pools = response.json().await?;
+
+    println!("kms");
 
     // Filter pools where the `quote_token` ID matches `token_to`
     let matching_pools: Vec<Pool> = pools.data.into_iter()
         .filter(|pool| {
             let base_token_id = &pool.relationships.base_token.data.id;
             let quote_token_id = &pool.relationships.quote_token.data.id;
+            println!("{}", base_token_id);
+            println!("{}", quote_token_id);
+            println!("{}", &format!("eth_{}", token_to));
             base_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_to)) ||
             quote_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_to))
         })
         .collect();
+
+    println!("here4");
 
     // Find the pool with the highest `base_token_price_quote_token`
     let highest_price_pool = matching_pools.into_iter().max_by(|a, b| {
@@ -92,6 +105,8 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
             std::cmp::Ordering::Equal
         }
     });
+
+    println!("here5");
 
     // Return the result or an error if no matching pool is found
     highest_price_pool.ok_or(FetchPoolError::NoMatchingPools)
