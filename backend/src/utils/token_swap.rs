@@ -34,6 +34,93 @@ pub enum FetchPoolError {
         Err(e) => eprintln!("Error: {}", e),
     }
 */
+// pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Pool, FetchPoolError> {
+//     let client = Client::new();
+
+//     // Build the URL by inserting `token_from` into the endpoint
+//     let url = format!(
+//         "https://api.geckoterminal.com/api/v2/networks/eth/tokens/{}/pools",
+//         token_from
+//     );
+
+//     // Make the GET request
+//     let response = client.get(&url).send().await;
+
+//     // println!("{:#?}", response.json());
+
+//     // Handle potential network errors
+//     let response = match response {
+//         Ok(resp) => resp,
+//         Err(err) => {
+//             eprintln!("Network error occurred: {}", err);
+//             return Err(FetchPoolError::RequestError(err));
+//         }
+//     };
+
+//     println!("here2");
+
+//     // Check if the response status is a success
+//     if !response.status().is_success() {
+//         let status = response.status();
+//         let text = response.text().await.unwrap_or_else(|_| "Could not read response body".to_string());
+//         eprintln!("Request failed with status: {}", status);
+//         eprintln!("Response body: {}", text);
+//         return Err(FetchPoolError::HttpError(format!("Status: {}, Body: {}", status, text)));
+//     }
+
+//     println!("here3");
+
+//     match response.json::<Pools>().await {
+//         Ok(pools) => {
+//             // Use `pools` here
+//             println!("{:?}", pools);
+        
+//     println!("kms");
+
+//     // Filter pools where the `quote_token` ID matches `token_to`
+//     let matching_pools: Vec<Pool> = pools.data.into_iter()
+//         .filter(|pool| {
+//             let base_token_id = &pool.relationships.base_token.data.id;
+//             let quote_token_id = &pool.relationships.quote_token.data.id;
+//             println!("{}", base_token_id);
+//             println!("{}", quote_token_id);
+//             println!("{}", &format!("eth_{}", token_to));
+//             base_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_to)) ||
+//             quote_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_to))
+//         })
+//         .collect();
+
+//     println!("here4");
+
+//     // Find the pool with the highest `base_token_price_quote_token`
+//     let highest_price_pool = matching_pools.into_iter().max_by(|a, b| {
+//         let a_base_token_id = &a.relationships.base_token.data.id;
+//         let a_forward = if a_base_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_from)) {&a.attributes.base_token_price_quote_token} else {&a.attributes.quote_token_price_base_token};
+
+//         let b_base_token_id = &b.relationships.base_token.data.id;
+//         let b_forward = if b_base_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_from)) {&b.attributes.base_token_price_quote_token} else {&b.attributes.quote_token_price_base_token};
+//         if a_forward > b_forward {
+//             std::cmp::Ordering::Greater
+//         } else if a_forward < b_forward {
+//             std::cmp::Ordering::Less
+//         } else {
+//             std::cmp::Ordering::Equal
+//         }
+//     });
+
+//     println!("here5");
+
+//     // Return the result or an error if no matching pool is found
+//     highest_price_pool.ok_or(FetchPoolError::NoMatchingPools)
+// }
+// Err(e) => {
+//     eprintln!("Failed to deserialize response: {:?}", e);
+//     // Handle the error, or return from the function if appropriate
+//     Err(FetchPoolError::NoMatchingPools)
+// }
+// }
+// }
+
 pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Pool, FetchPoolError> {
     let client = Client::new();
 
@@ -44,20 +131,7 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
     );
 
     // Make the GET request
-    let response = client.get(&url).send().await;
-
-    // println!("{:#?}", response.json());
-
-    // Handle potential network errors
-    let response = match response {
-        Ok(resp) => resp,
-        Err(err) => {
-            eprintln!("Network error occurred: {}", err);
-            return Err(FetchPoolError::RequestError(err));
-        }
-    };
-
-    println!("here2");
+    let response = client.get(&url).send().await.map_err(FetchPoolError::RequestError)?;
 
     // Check if the response status is a success
     if !response.status().is_success() {
@@ -68,13 +142,23 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
         return Err(FetchPoolError::HttpError(format!("Status: {}, Body: {}", status, text)));
     }
 
-    println!("here3");
+    // Read the entire response as text
+    let text = response.text().await.unwrap_or_else(|_| "Could not read response body".to_string());
 
-    match response.json::<Pools>().await {
-        Ok(pools) => {
-            // Use `pools` here
-            println!("{:?}", pools);
-        
+    // Print the raw JSON for debugging
+    eprintln!("Raw JSON: {}", text);
+
+    // Parse the JSON from the text
+    let pools: Pools = match serde_json::from_str(&text) {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("Failed to deserialize response: {:?}", e);
+            eprintln!("Raw JSON was: {}", text);
+            return Err(FetchPoolError::JsonError(e));
+        }
+    };
+
+    println!("Parsed Pools: {:?}", pools);
     println!("kms");
 
     // Filter pools where the `quote_token` ID matches `token_to`
@@ -95,17 +179,20 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
     // Find the pool with the highest `base_token_price_quote_token`
     let highest_price_pool = matching_pools.into_iter().max_by(|a, b| {
         let a_base_token_id = &a.relationships.base_token.data.id;
-        let a_forward = if a_base_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_from)) {&a.attributes.base_token_price_quote_token} else {&a.attributes.quote_token_price_base_token};
+        let a_forward = if a_base_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_from)) {
+            &a.attributes.base_token_price_quote_token
+        } else {
+            &a.attributes.quote_token_price_base_token
+        };
 
         let b_base_token_id = &b.relationships.base_token.data.id;
-        let b_forward = if b_base_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_from)) {&b.attributes.base_token_price_quote_token} else {&b.attributes.quote_token_price_base_token};
-        if a_forward > b_forward {
-            std::cmp::Ordering::Greater
-        } else if a_forward < b_forward {
-            std::cmp::Ordering::Less
+        let b_forward = if b_base_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_from)) {
+            &b.attributes.base_token_price_quote_token
         } else {
-            std::cmp::Ordering::Equal
-        }
+            &b.attributes.quote_token_price_base_token
+        };
+
+        a_forward.partial_cmp(b_forward).unwrap_or(std::cmp::Ordering::Equal)
     });
 
     println!("here5");
@@ -113,14 +200,6 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
     // Return the result or an error if no matching pool is found
     highest_price_pool.ok_or(FetchPoolError::NoMatchingPools)
 }
-Err(e) => {
-    eprintln!("Failed to deserialize response: {:?}", e);
-    // Handle the error, or return from the function if appropriate
-    Err(FetchPoolError::NoMatchingPools)
-}
-}
-}
-
 /*
     Example usage:
 
