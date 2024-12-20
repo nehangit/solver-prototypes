@@ -1,21 +1,46 @@
 use {
     solvers_dto::auction::{Auction, Token},
     web3::types::{H160, U256},
+    crate::structures::competition_data::CompetitionData,
     std::collections::HashMap,
     std::convert::TryInto,
+    std::error::Error,
+    serde_json::Value,
 };
 
 /*
-    To be completed when or if previous auction results for CoW come back
-    up (currently 403 Forbidden)
+    WIP nonlinear programming solver.
 */
-pub fn get_clearing_prices(auction: &Auction) -> HashMap<H160, f64> {
+pub async fn get_clearing_prices(auction: &Auction) -> Result<HashMap<H160, f64>, Box<dyn Error>> {
     let token_index = enumerate_tokens(&auction.tokens);
 
     let (t_b, t_s) = get_buy_sell_matrices(&token_index, auction);
 
     // previous settling price (pull from https://api.cow.fi/mainnet/api/v1/solver_competition/latest)
-    let p_old: Vec<U256> = Vec::new();
+    let url = "https://api.cow.fi/mainnet/api/v1/solver_competition/latest"; 
+    let response = reqwest::get(url).await?.text().await?;
+
+    // Parse the JSON response
+    let latest_auction: CompetitionData = serde_json::from_str(&response).expect("Parsing failed");
+    
+    // initialize old prices to reference prices in case some tokens weren't used in the previous auction
+    let mut p_old: Vec<U256> = auction.tokens
+        .iter()
+        .filter_map(|(token_address, token_data)| token_data.reference_price)
+        .collect();
+    
+    // iterate over all solutions to find the winner's settlement prices
+    for solution in latest_auction.solutions.iter() {
+        if (solution.is_winner) {
+            for (token, price) in &solution.clearing_prices {
+                if (token_index.contains_key(&token)) {
+                    p_old[token_index[&token] as usize] = *price;
+                }
+            }
+        }
+    }
+
+    println!("{:#?}", p_old);
 
     // Fill with lambda values lambda_j = 1 / (n * (p_old)_j)
     let lambda: Vec<f64> = p_old
@@ -48,7 +73,7 @@ pub fn get_clearing_prices(auction: &Auction) -> HashMap<H160, f64> {
         .collect();
 
     // Optimize clearing prices using nonlinear programming
-    return HashMap::new();
+    return Ok(HashMap::new());
 }
 
 fn enumerate_tokens(tokens: &HashMap<H160, Token>) -> HashMap<H160, i32> {
