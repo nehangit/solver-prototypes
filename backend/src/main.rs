@@ -1,5 +1,6 @@
 use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
 use anyhow::Error;
+use reqwest::Client;    
 use log::info; // Logging macro
 use serde_json::from_str;
 use serde_json::json;
@@ -25,12 +26,44 @@ use structures::pools::{Pool, Pools};
 use utils::parse::json_to_struct;
 use utils::token_swap::get_direct_swap_pool;
 
-async fn get_hello() -> impl Responder {
-    log::info!("Received hello  request: {:?}", "Hello, World!");
-    HttpResponse::Ok().json(json!({"message": "Hello, World!"}))
+async fn write_to_firebase(path: &str, data: &str) -> Result<(), reqwest::Error> {
+    let firebase_url = "https://solverevlos-c795c-default-rtdb.firebaseio.com/"; // Replace with your Firebase URL
+    let client = Client::new();
+
+    let url = format!("{}/{}.json", firebase_url, path);
+    client.put(&url).body(data.to_string()).send().await?;
+    Ok(())
 }
 
-async fn post_solve(auction: web::Json<Auction>) -> impl Responder {
+async fn get_hello() -> impl Responder {
+    let message = "Hello, World!";
+    info!("Received hello request: {}", message);
+
+    // Write the message to Firebase
+    if let Err(e) = write_to_firebase("logs/hello", message).await {
+        info!("Failed to write to Firebase: {}", e);
+    }
+
+    HttpResponse::Ok().json(json!({"message": message}))
+}
+
+async fn post_solve(body: web::Bytes) -> impl Responder {
+    let body_str = String::from_utf8_lossy(&body);
+    info!("Received solve request: {}", body_str);
+
+    // Write the raw body to Firebase
+    if let Err(e) = write_to_firebase("logs/solve", &body_str).await {
+        info!("Failed to write to Firebase: {}", e);
+    }
+
+    let auction: Auction = match from_str(&body_str) {
+        Ok(auction) => auction,
+        Err(_) => {
+            return HttpResponse::BadRequest().json(json!({"error": "Invalid input"}));
+        }
+    };
+
+
     let auction_domain = match to_domain(&auction) {
         Ok(value) => value,
         Err(err) => {
@@ -48,14 +81,17 @@ async fn post_solve(auction: web::Json<Auction>) -> impl Responder {
     let solutionsdto = from_domain(&solutions);
     println!("Naive Solutions: {:#?}", solutionsdto);
     HttpResponse::Ok().json(solutionsdto)
-    // HttpResponse::Ok().json(json!({
-    //     "message": format!("Solving auction {}", auction.id.unwrap_or_default())
-    // }))
+
 }
 
 async fn post_notify(body: web::Bytes) -> impl Responder {
     let body_str = String::from_utf8_lossy(&body);
     info!("Received notify request: {}", body_str);
+
+    // Write the raw body to Firebase
+    if let Err(e) = write_to_firebase("logs/notify", &body_str).await {
+        info!("Failed to write to Firebase: {}", e);
+    }
 
     let notif: Notification = match from_str(&body_str) {
         Ok(notif) => notif,
@@ -74,6 +110,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .wrap(Logger::default())
+            .app_data(web::PayloadConfig::default().limit(50 * 1024 * 1024))
             .route("/", web::get().to(get_hello))
             .route("/notify", web::post().to(post_notify))
             .route("/solve", web::post().to(post_solve))
