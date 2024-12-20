@@ -1,15 +1,18 @@
 use {
-    solvers_dto::auction::{Auction, Liquidity},
-    solvers_dto::solution::{Solution, Trade, Fulfillment, Interaction, LiquidityInteraction, Call},
-    web3::types::{H160, U256},
-    std::collections::HashMap,
+    crate::structures::edge::Edge,
+    crate::structures::gas_price::{GasOracleResponse, GasPrices},
     crate::structures::pools::{Pool, Pools},
     crate::utils::token_swap::get_direct_swap_pool,
-    crate::structures::gas_price::{GasOracleResponse, GasPrices},
+    solvers_dto::auction::{Auction, Liquidity},
+    solvers_dto::solution::{
+        Call, Fulfillment, Interaction, LiquidityInteraction, Solution, Trade,
+    },
+    std::collections::HashMap,
+    web3::types::{H160, U256},
 };
 
+use bigdecimal::{BigDecimal, FromPrimitive, Signed, ToPrimitive, Zero};
 use std::str::FromStr;
-use bigdecimal::{BigDecimal, ToPrimitive, FromPrimitive, Signed, Zero};
 
 /// Converts a BigDecimal to U256 by **truncating** any fractional part.
 ///
@@ -47,7 +50,10 @@ fn calculate_reserves(pool: &Pool) -> (BigDecimal, BigDecimal) {
 /*
     Solves the auction using the best price UniSwap pool
 */
-pub async fn fill_with_uniswap_liquidity(auction: Auction, gas_prices: &GasPrices) -> Solution {
+pub async fn fill_with_uniswap_liquidity(
+    auction: Auction,
+    gas_prices: &GasPrices,
+) -> (Solution, Vec<Edge>) {
     // Initialize solution
     let mut solution = Solution {
         id: auction.id.unwrap_or_default() as u64,
@@ -60,6 +66,8 @@ pub async fn fill_with_uniswap_liquidity(auction: Auction, gas_prices: &GasPrice
     };
 
     let mut cumulative_gas: U256 = U256::zero();
+    // Initialize vector of directed edges (from, to)
+    let mut graph_edges: Vec<Edge> = Vec::new();
 
     for order in &auction.orders {
         let mut fulfilled = false;
@@ -71,13 +79,20 @@ pub async fn fill_with_uniswap_liquidity(auction: Auction, gas_prices: &GasPrice
         if let Ok(best_pool) = get_direct_swap_pool(&str_sell_token, &str_buy_token).await {
             // We'll interpret pool.attributes.* as BigDecimal
             // If they're not BigDecimal, parse them here:
-            let base_token_price_quote_token = best_pool.attributes.base_token_price_quote_token.clone();
-            let quote_token_price_base_token = best_pool.attributes.quote_token_price_base_token.clone();
+            let base_token_price_quote_token =
+                best_pool.attributes.base_token_price_quote_token.clone();
+            let quote_token_price_base_token =
+                best_pool.attributes.quote_token_price_base_token.clone();
             let base_token_price_usd = best_pool.attributes.base_token_price_usd.clone();
             let quote_token_price_usd = best_pool.attributes.quote_token_price_usd.clone();
 
             // If buyToken is the baseToken
-            if best_pool.relationships.base_token.data.id.eq_ignore_ascii_case(&format!("eth_{}", &order.buy_token))
+            if best_pool
+                .relationships
+                .base_token
+                .data
+                .id
+                .eq_ignore_ascii_case(&format!("eth_{}", &order.buy_token))
             {
                 // Convert U256 sell_amount/buy_amount into BigDecimal
                 let order_buy_amount = BigDecimal::from(order.buy_amount.as_u128());
@@ -93,7 +108,8 @@ pub async fn fill_with_uniswap_liquidity(auction: Auction, gas_prices: &GasPrice
                 } else {
                     // We pick sell_amount * quote_token_price_base_token
                     // (both must end as BigDecimal before converting to u128)
-                    let calc = BigDecimal::from(order.sell_amount.as_u128()) * &quote_token_price_base_token;
+                    let calc = BigDecimal::from(order.sell_amount.as_u128())
+                        * &quote_token_price_base_token;
                     calc.to_u128().unwrap_or(u128::MAX)
                 };
 
@@ -103,18 +119,29 @@ pub async fn fill_with_uniswap_liquidity(auction: Auction, gas_prices: &GasPrice
                 let max_sell_amt_dec = &max_buy_amt_dec * &base_token_price_quote_token;
 
                 // Calculate reserves in BigDecimal
-                let (buy_liquidity, sell_liquidity) = calculate_reserves(&best_pool); 
+                let (buy_liquidity, sell_liquidity) = calculate_reserves(&best_pool);
                 // buy_liquidity and sell_liquidity are BigDecimal
 
                 // Check if there's enough liquidity
                 if buy_liquidity >= max_buy_amt_dec && sell_liquidity >= max_sell_amt_dec {
-                    solution.prices.entry(H160::from_str(&str_buy_token).unwrap_or(H160::zero())).or_insert(bigdecimal_to_u256(&best_pool.attributes.base_token_price_usd));
-                    solution.prices.entry(H160::from_str(&str_sell_token).unwrap_or(H160::zero())).or_insert(bigdecimal_to_u256(&best_pool.attributes.quote_token_price_usd));
+                    solution
+                        .prices
+                        .entry(H160::from_str(&str_buy_token).unwrap_or(H160::zero()))
+                        .or_insert(bigdecimal_to_u256(
+                            &best_pool.attributes.base_token_price_usd,
+                        ));
+                    solution
+                        .prices
+                        .entry(H160::from_str(&str_sell_token).unwrap_or(H160::zero()))
+                        .or_insert(bigdecimal_to_u256(
+                            &best_pool.attributes.quote_token_price_usd,
+                        ));
 
                     // Fee = abs( (max_buy_amt * base_token_price_usd) - (max_sell_amt * quote_token_price_usd ) )
                     let fee_calc = (&max_buy_amt_dec * &base_token_price_usd)
                         - (&max_sell_amt_dec * &quote_token_price_usd);
-                    let expected_fee_dec = fee_calc.abs() / (&max_buy_amt_dec * &quote_token_price_usd);
+                    let expected_fee_dec =
+                        fee_calc.abs() / (&max_buy_amt_dec * &quote_token_price_usd);
 
                     // Convert results to U256
                     let executed_amount_u256 = bigdecimal_to_u256(&max_sell_amt_dec);
@@ -128,7 +155,9 @@ pub async fn fill_with_uniswap_liquidity(auction: Auction, gas_prices: &GasPrice
                     });
 
                     solution.trades.push(trade);
-                    cumulative_gas += bigdecimal_to_u256(&(BigDecimal::from(75000) * gas_prices.ProposeGasPrice.clone())); // Assume gas used to be around 75000
+                    cumulative_gas += bigdecimal_to_u256(
+                        &(BigDecimal::from(75000) * gas_prices.ProposeGasPrice.clone()),
+                    ); // Assume gas used to be around 75000
 
                     // Interaction amounts
                     let input_amount_u256 = bigdecimal_to_u256(&max_buy_amt_dec);
@@ -136,7 +165,7 @@ pub async fn fill_with_uniswap_liquidity(auction: Auction, gas_prices: &GasPrice
 
                     let interaction = Interaction::Liquidity(LiquidityInteraction {
                         internalize: false,
-                        id: best_pool.id,
+                        id: best_pool.id.clone(),
                         input_token: order.sell_token,
                         output_token: order.buy_token,
                         input_amount: input_amount_u256,
@@ -144,6 +173,31 @@ pub async fn fill_with_uniswap_liquidity(auction: Auction, gas_prices: &GasPrice
                     });
 
                     solution.interactions.push(interaction);
+
+                    graph_edges.push(Edge {
+                        from: h160_to_string(&order.owner),
+                        to: best_pool.id.clone(),
+                        amount: input_amount_u256,
+                        token: order.sell_token,
+                    });
+
+                    // if 'receiver' is set (i.e. owner wants to redirect their trade) there should be an edge (pool, receiver)
+                    // otherwise make an edge (pool, owner address)
+                    if let Some(receiver) = order.receiver {
+                        graph_edges.push(Edge {
+                            from: best_pool.id.clone(),
+                            to: h160_to_string(&receiver),
+                            amount: output_amount_u256,
+                            token: order.buy_token,
+                        });
+                    } else {
+                        graph_edges.push(Edge {
+                            from: best_pool.id.clone(),
+                            to: h160_to_string(&order.owner),
+                            amount: output_amount_u256,
+                            token: order.buy_token,
+                        });
+                    }
 
                     // Copy over pre_interactions
                     for pre_interaction in &order.pre_interactions {
@@ -165,7 +219,8 @@ pub async fn fill_with_uniswap_liquidity(auction: Auction, gas_prices: &GasPrice
 
                     fulfilled = true;
                 }
-            } else { // if buyToken is quoteToken
+            } else {
+                // if buyToken is quoteToken
                 // Convert U256 sell_amount/buy_amount into BigDecimal
                 let order_buy_amount = BigDecimal::from(order.buy_amount.as_u128());
                 let order_sell_amount = BigDecimal::from(order.sell_amount.as_u128());
@@ -180,7 +235,8 @@ pub async fn fill_with_uniswap_liquidity(auction: Auction, gas_prices: &GasPrice
                 } else {
                     // We pick sell_amount * quote_token_price_base_token
                     // (both must end as BigDecimal before converting to u128)
-                    let calc = BigDecimal::from(order.sell_amount.as_u128()) * &base_token_price_quote_token;
+                    let calc = BigDecimal::from(order.sell_amount.as_u128())
+                        * &base_token_price_quote_token;
                     calc.to_u128().unwrap_or(u128::MAX)
                 };
 
@@ -190,18 +246,29 @@ pub async fn fill_with_uniswap_liquidity(auction: Auction, gas_prices: &GasPrice
                 let max_sell_amt_dec = &max_buy_amt_dec * &quote_token_price_base_token;
 
                 // Calculate reserves in BigDecimal
-                let (buy_liquidity, sell_liquidity) = calculate_reserves(&best_pool); 
+                let (buy_liquidity, sell_liquidity) = calculate_reserves(&best_pool);
                 // buy_liquidity and sell_liquidity are BigDecimal
 
                 // Check if there's enough liquidity
                 if buy_liquidity >= max_buy_amt_dec && sell_liquidity >= max_sell_amt_dec {
-                    solution.prices.entry(H160::from_str(&str_buy_token).unwrap_or(H160::zero())).or_insert(bigdecimal_to_u256(&best_pool.attributes.quote_token_price_usd));
-                    solution.prices.entry(H160::from_str(&str_sell_token).unwrap_or(H160::zero())).or_insert(bigdecimal_to_u256(&best_pool.attributes.base_token_price_usd));
+                    solution
+                        .prices
+                        .entry(H160::from_str(&str_buy_token).unwrap_or(H160::zero()))
+                        .or_insert(bigdecimal_to_u256(
+                            &best_pool.attributes.quote_token_price_usd,
+                        ));
+                    solution
+                        .prices
+                        .entry(H160::from_str(&str_sell_token).unwrap_or(H160::zero()))
+                        .or_insert(bigdecimal_to_u256(
+                            &best_pool.attributes.base_token_price_usd,
+                        ));
 
                     // Fee = abs( (max_buy_amt * base_token_price_usd) - (max_sell_amt * quote_token_price_usd ) )
                     let fee_calc = (&max_buy_amt_dec * &quote_token_price_usd)
                         - (&max_sell_amt_dec * &base_token_price_usd);
-                    let expected_fee_dec = fee_calc.abs() / (&max_buy_amt_dec * &quote_token_price_usd);
+                    let expected_fee_dec =
+                        fee_calc.abs() / (&max_buy_amt_dec * &quote_token_price_usd);
 
                     // Convert results to U256
                     let executed_amount_u256 = bigdecimal_to_u256(&max_sell_amt_dec);
@@ -215,7 +282,9 @@ pub async fn fill_with_uniswap_liquidity(auction: Auction, gas_prices: &GasPrice
                     });
 
                     solution.trades.push(trade);
-                    cumulative_gas += bigdecimal_to_u256(&(BigDecimal::from(75000) * gas_prices.ProposeGasPrice.clone())); // Assume gas used to be 75000
+                    cumulative_gas += bigdecimal_to_u256(
+                        &(BigDecimal::from(75000) * gas_prices.ProposeGasPrice.clone()),
+                    ); // Assume gas used to be 75000
 
                     // Interaction amounts
                     let input_amount_u256 = bigdecimal_to_u256(&max_buy_amt_dec);
@@ -223,7 +292,7 @@ pub async fn fill_with_uniswap_liquidity(auction: Auction, gas_prices: &GasPrice
 
                     let interaction = Interaction::Liquidity(LiquidityInteraction {
                         internalize: false,
-                        id: best_pool.id,
+                        id: best_pool.id.clone(),
                         input_token: order.sell_token,
                         output_token: order.buy_token,
                         input_amount: input_amount_u256,
@@ -231,6 +300,31 @@ pub async fn fill_with_uniswap_liquidity(auction: Auction, gas_prices: &GasPrice
                     });
 
                     solution.interactions.push(interaction);
+
+                    graph_edges.push(Edge {
+                        from: h160_to_string(&order.owner),
+                        to: best_pool.id.clone(),
+                        amount: input_amount_u256,
+                        token: order.sell_token,
+                    });
+
+                    // if 'receiver' is set (i.e. owner wants to redirect their trade) there should be an edge (pool, receiver)
+                    // otherwise make an edge (pool, owner address)
+                    if let Some(receiver) = order.receiver {
+                        graph_edges.push(Edge {
+                            from: best_pool.id.clone(),
+                            to: h160_to_string(&receiver),
+                            amount: output_amount_u256,
+                            token: order.buy_token,
+                        });
+                    } else {
+                        graph_edges.push(Edge {
+                            from: best_pool.id.clone(),
+                            to: h160_to_string(&order.owner),
+                            amount: output_amount_u256,
+                            token: order.buy_token,
+                        });
+                    }
 
                     // Copy over pre_interactions
                     for pre_interaction in &order.pre_interactions {
@@ -251,21 +345,32 @@ pub async fn fill_with_uniswap_liquidity(auction: Auction, gas_prices: &GasPrice
                     }
 
                     fulfilled = true;
-                } 
+                }
             }
         } else {
-            let hex_uid: String = order.uid.iter().map(|byte| format!("{:02x}", byte)).collect();
+            let hex_uid: String = order
+                .uid
+                .iter()
+                .map(|byte| format!("{:02x}", byte))
+                .collect();
             println!("Could not find direct swap for order '0x{}'", hex_uid);
         }
 
         if !fulfilled {
-            let hex_uid: String = order.uid.iter().map(|byte| format!("{:02x}", byte)).collect();
+            let hex_uid: String = order
+                .uid
+                .iter()
+                .map(|byte| format!("{:02x}", byte))
+                .collect();
             println!("Order '0x{}' not filled", hex_uid);
-            continue;
         }
     }
 
     // Set gas
     solution.gas = Some(cumulative_gas.as_u64());
-    solution
+    (solution, graph_edges)
+}
+
+fn h160_to_string(address: &H160) -> String {
+    format!("0x{:x}", address)
 }
