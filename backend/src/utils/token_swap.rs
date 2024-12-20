@@ -46,7 +46,7 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
     // Make the GET request
     let response = client.get(&url).send().await;
 
-    println!("here");
+    // println!("{:#?}", response.json());
 
     // Handle potential network errors
     let response = match response {
@@ -70,9 +70,11 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
 
     println!("here3");
 
-    // Deserialize the response into `Pools`
-    let pools: Pools = response.json().await?;
-
+    match response.json::<Pools>().await {
+        Ok(pools) => {
+            // Use `pools` here
+            println!("{:?}", pools);
+        
     println!("kms");
 
     // Filter pools where the `quote_token` ID matches `token_to`
@@ -110,6 +112,13 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
 
     // Return the result or an error if no matching pool is found
     highest_price_pool.ok_or(FetchPoolError::NoMatchingPools)
+}
+Err(e) => {
+    eprintln!("Failed to deserialize response: {:?}", e);
+    // Handle the error, or return from the function if appropriate
+    Err(FetchPoolError::NoMatchingPools)
+}
+}
 }
 
 /*
