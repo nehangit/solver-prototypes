@@ -1,9 +1,9 @@
+use crate::structures::pools::{Pool, Pools};
 use reqwest::Client;
 use serde_json::Error as SerdeError;
 use thiserror::Error;
-use crate::structures::pools::{Pools, Pool};
 
-/* 
+/*
     Useful Addresses:
 
     let weth = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
@@ -74,7 +74,7 @@ pub enum FetchPoolError {
 //         Ok(pools) => {
 //             // Use `pools` here
 //             println!("{:?}", pools);
-        
+
 //     println!("kms");
 
 //     // Filter pools where the `quote_token` ID matches `token_to`
@@ -121,7 +121,10 @@ pub enum FetchPoolError {
 // }
 // }
 
-pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Pool, FetchPoolError> {
+pub async fn get_direct_swap_pool(
+    token_from: &str,
+    token_to: &str,
+) -> Result<Pool, FetchPoolError> {
     let client = Client::new();
 
     // Build the URL by inserting `token_from` into the endpoint
@@ -131,19 +134,32 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
     );
 
     // Make the GET request
-    let response = client.get(&url).send().await.map_err(FetchPoolError::RequestError)?;
+    let response = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(FetchPoolError::RequestError)?;
 
     // Check if the response status is a success
     if !response.status().is_success() {
         let status = response.status();
-        let text = response.text().await.unwrap_or_else(|_| "Could not read response body".to_string());
+        let text = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Could not read response body".to_string());
         eprintln!("Request failed with status: {}", status);
         eprintln!("Response body: {}", text);
-        return Err(FetchPoolError::HttpError(format!("Status: {}, Body: {}", status, text)));
+        return Err(FetchPoolError::HttpError(format!(
+            "Status: {}, Body: {}",
+            status, text
+        )));
     }
 
     // Read the entire response as text
-    let text = response.text().await.unwrap_or_else(|_| "Could not read response body".to_string());
+    let text = response
+        .text()
+        .await
+        .unwrap_or_else(|_| "Could not read response body".to_string());
 
     // Parse the JSON from the text
     let pools: Pools = match serde_json::from_str(&text) {
@@ -156,15 +172,17 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
     };
 
     // Filter pools where the `quote_token` ID matches `token_to`
-    let matching_pools: Vec<Pool> = pools.data.into_iter()
+    let matching_pools: Vec<Pool> = pools
+        .data
+        .into_iter()
         .filter(|pool| {
             let base_token_id = &pool.relationships.base_token.data.id;
             let quote_token_id = &pool.relationships.quote_token.data.id;
             // println!("{}", base_token_id);
             // println!("{}", quote_token_id);
             // println!("{}", &format!("eth_{}", token_to));
-            base_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_to)) ||
-            quote_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_to))
+            base_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_to))
+                || quote_token_id.eq_ignore_ascii_case(&format!("eth_{}", token_to))
         })
         .collect();
 
@@ -184,7 +202,9 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
             &b.attributes.quote_token_price_base_token
         };
 
-        a_forward.partial_cmp(b_forward).unwrap_or(std::cmp::Ordering::Equal)
+        a_forward
+            .partial_cmp(b_forward)
+            .unwrap_or(std::cmp::Ordering::Equal)
     });
 
     println!("here5");
@@ -203,7 +223,11 @@ pub async fn get_direct_swap_pool(token_from: &str, token_to: &str) -> Result<Po
         Err(e) => eprintln!("Error: {}", e),
     }
 */
-pub async fn get_intermediate_swap_pools(token_mid: &str, token_from: &str, token_to: &str) -> Result<(Pool, Pool), FetchPoolError> {
+pub async fn get_intermediate_swap_pools(
+    token_mid: &str,
+    token_from: &str,
+    token_to: &str,
+) -> Result<(Pool, Pool), FetchPoolError> {
     // WETH address
     // First call: token_from -> token_mid
     let pool1 = get_direct_swap_pool(token_from, token_mid).await?;

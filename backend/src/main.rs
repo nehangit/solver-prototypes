@@ -1,19 +1,18 @@
-use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
 use anyhow::Error;
 use log::info; // Logging macro
+use serde_json::from_str;
 use serde_json::json;
 use serde_json::to_string_pretty;
+use std::env;
 use std::sync::{Arc, Mutex};
 use tokio::time::{sleep, Duration};
-use serde_json::from_str;
-use std::env;
 
-// use solvers::api::routes::solve::dto::auction::to_domain;
+use solvers::api::routes::solve::dto::auction::to_domain;
+use solvers::api::routes::solve::dto::solution::from_domain;
 use solvers::domain::solver::Naive;
 use solvers_dto::auction::Auction;
 use solvers_dto::notification::Notification;
-use solvers_dto::solution::Solution;
-use solvers::api::routes::solve::dto::solution::from_domain;
 
 mod solve;
 mod structures;
@@ -31,7 +30,6 @@ async fn get_hello() -> impl Responder {
     HttpResponse::Ok().json(json!({"message": "Hello, World!"}))
 }
 
-/*
 async fn post_solve(auction: web::Json<Auction>) -> impl Responder {
     let auction_domain = match to_domain(&auction) {
         Ok(value) => value,
@@ -48,6 +46,7 @@ async fn post_solve(auction: web::Json<Auction>) -> impl Responder {
     let naivesolver = Naive;
     let solutions = naivesolver.solve(auction_domain).await;
     let solutionsdto = from_domain(&solutions);
+    println!("Naive Solutions: {:#?}", solutionsdto);
     HttpResponse::Ok().json(solutionsdto)
     // HttpResponse::Ok().json(json!({
     //     "message": format!("Solving auction {}", auction.id.unwrap_or_default())
@@ -68,7 +67,6 @@ async fn post_notify(body: web::Bytes) -> impl Responder {
     HttpResponse::Ok().json(json!({"status": "ok"}))
 }
 
-/*
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
@@ -80,46 +78,45 @@ async fn main() -> std::io::Result<()> {
             .route("/notify", web::post().to(post_notify))
             .route("/solve", web::post().to(post_solve))
     })
-    .bind(format!("0.0.0.0:{}",port))?
+    .bind(format!("0.0.0.0:{}", port))?
     .run()
     .await
 }
-*/
 
-#[tokio::main]
-async fn main() {
-    // Replace with your Etherscan API key
-    let api_key = "BQAT6JY5DAY3MJF8FY7PMHKACRPXM19JB1".to_string();
+// #[tokio::main]
+// async fn main() {
+//     // Replace with your Etherscan API key
+//     let api_key = "BQAT6JY5DAY3MJF8FY7PMHKACRPXM19JB1".to_string();
 
-    // Shared gas_price variable
-    let gas_price = Arc::new(Mutex::new(None));
+//     // Shared gas_price variable
+//     let gas_price = Arc::new(Mutex::new(None));
 
-    // Clone the Arc to move into the task
-    let gas_price_clone = gas_price.clone();
+//     // Clone the Arc to move into the task
+//     let gas_price_clone = gas_price.clone();
 
-    // Spawn the background task
-    tokio::spawn(async move {
-        update_gas_price(gas_price_clone, api_key).await;
-    });
+//     // Spawn the background task
+//     tokio::spawn(async move {
+//         update_gas_price(gas_price_clone, api_key).await;
+//     });
 
-    sleep(Duration::from_millis(1000)).await;
+//     sleep(Duration::from_millis(1000)).await;
 
-    let auction: Auction = json_to_struct("data/real_sample.json");
+//     let auction: Auction = json_to_struct("data/real_sample.json");
 
-    let gas_price_lock = gas_price.lock().unwrap();
-    if let Some(gas_prices) = &*gas_price_lock {
-        let solution = fill_with_uniswap_liquidity(auction, gas_prices.clone()).await;
-        println!("{:#?}", solution.0);
+//     let gas_price_lock = gas_price.lock().unwrap();
+//     if let Some(gas_prices) = &*gas_price_lock {
+//         let solution = fill_with_uniswap_liquidity(auction, gas_prices.clone()).await;
+//         println!("{:#?}", solution.0);
 
-        let sol_json = serde_json::to_string_pretty(&solution.0).unwrap();
-        println!("{}", sol_json);
+//         let sol_json = serde_json::to_string_pretty(&solution.0).unwrap();
+//         println!("{}", sol_json);
 
-        let edge_json = serde_json::to_string_pretty(&solution.1).unwrap();
-        println!("{}", edge_json);
-    } else {
-        println!("Gas price not available yet");
-    }
-}
+//         let edge_json = serde_json::to_string_pretty(&solution.1).unwrap();
+//         println!("{}", edge_json);
+//     } else {
+//         println!("Gas price not available yet");
+//     }
+// }
 
 /// Fetches gas prices from Etherscan
 async fn fetch_gas_prices(api_key: &str) -> Result<GasPrices, Error> {

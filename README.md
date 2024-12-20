@@ -1,93 +1,209 @@
-# group_18_project
+# Cross-Chain Automated Solver for CoW Protocol
 
+## Overview
 
+This project focuses on building a cross-chain automated solver off-chain to efficiently route trading intents to the correct venue or party for execution or fulfillment on-chain. Initially, the solver targets CoW (Coincidence of Wants) batch auctions, aiming to match peer-to-peer orders optimally. The solver will integrate with auction protocols using a Request for Quotes (RFQ) model to submit competitive bids and complete transactions efficiently within tight timeframes.
 
-## Getting started
+By extending an open-source solver, this project contributes to the growing decentralized finance (DeFi) ecosystem, addressing challenges like order routing, capital efficiency, and minimizing latency in transaction execution. The system aims to maximize surplus for users, reduce gas fees, and mitigate MEV risks.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+---
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Motivation
 
-## Add your files
+DeFi's rapid growth necessitates efficient trading solutions. Blockchains present unique challenges, such as:
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+- Different token standards
+- Variations in liquidity pools
+- Infrastructure constraints
 
+Solvers play a pivotal role by acting as market makers, executing trades across tokens via protocols and bridges. The solver in this project specifically targets CoW protocol batch auctions, optimizing order surplus to benefit users and the protocol.
+
+---
+
+## Features
+
+### Auction Solvers
+
+- **Batch Auctions**: Match orders directly when possible; fallback to AMMs or liquidity pools when necessary.
+- **Surplus Maximization**: Optimize the surplus function for limit buy and sell orders.
+- **Gas and MEV Efficiency**: Avoid gas fees for canceled trades and minimize MEV risks.
+
+### Solution Graph Visualization
+
+- **Order Routing**: Dynamically compute optimal routes for cross-chain trading.
+- **Auction Integration**: Participate in RFQ-based auctions with competitive bids.
+- **Latency Reduction**: Respond within 10-second batch auction windows.
+- **Combinatorial Problem Solving**: Solve algebraic problems to maximize efficiency.
+
+---
+
+## Technical Details
+
+### Surplus Calculation and Objective Function
+
+The surplus for an order \( o \) is defined as:
+
+\[ U(x, -y) = \begin{cases}
+(x - y \pi)p(b) & \text{for limit sell orders} \\
+(x \pi - y)p(s) & \text{for limit buy orders}
+\end{cases} \]
+
+where:
+
+- \( x \): Amount of token to buy
+- \( y \): Amount of token to sell
+- \( \pi \): Price ratio provided by the user
+- \( p(b), p(s) \): Normalized prices of the bought/sold tokens
+
+The solution quality \( Q \) is the sum of surpluses over all orders plus protocol fees:
+
+\[ Q = \sum_o U(o) + \sum_o p \cdot f(o) \]
+
+The solver maximizes \( Q \) to win auctions.
+
+### Naive Solver
+
+### Provided Liquidity Immediate Matching (Luke's Solver)
+
+### Gecko Terminal On Chain Liquidity Solver (Phillip's Solver)
+
+### Bonus: Nonlinear Programming
+
+### Architecture
+
+- **Programming Languages**:
+  - **Python**: For high-level logic, testing, and performance analysis.
+- **Server**: Hosted on Heroku, implementing CoW protocol-required endpoints.
+- **Optimization Algorithms**: Includes Bellman-Ford for graph-based optimization.
+- **Testing and Simulation**: Locally simulate batch auctions and compare solutions.
+
+### Tools and Libraries
+
+- Open-source solvers for CoW protocol:
+  - [Solver Template](https://github.com/cowprotocol/solver-template-py)
+  - [Searcher CoWswap](https://github.com/autistic-symposium/searcher-cowswap-py)
+- CoW Protocol Documentation:
+  - [CoW Docs](https://docs.cow.fi/cow-protocol)
+  - [The Problem](https://docs.cow.fi/cow-protocol/reference/core/auctions/the-problem)
+
+---
+
+## Milestones and Timeline
+
+### Phase 1: Research and Setup
+
+- **11/16 - 11/20**
+  - Set up Heroku server and basic graph functionality.
+  - Explore Bellman-Ford Algorithm.
+  - Refactor core files for new auction schema.
+
+### Phase 2: Refactoring and POC Development
+
+- **11/21 - 11/29**
+  - Implement Bellman-Ford Proof of Concept (POC).
+  - Refactor `spread_solver.py` and integrate with Heroku endpoints.
+  - Debug and integrate functionality for batch auctions.
+
+### Phase 3: Testing and Optimization
+
+- **11/30 - 12/9**
+  - Create simulation for batch auctions and test surplus calculations.
+  - Implement and test limit buy orders.
+  - Begin shadow competition integration.
+
+### Phase 4: Finalization and Visualization
+
+- **12/10 - 12/17**
+  - Develop visualizations for graph transactions in real-time.
+  - Optimize and parallelize code.
+  - Fully integrate with CoW protocol and finalize for competition.
+
+---
+
+## Server Requirements
+
+The Heroku server must:
+
+1. Provide a health check endpoint returning `True`.
+2. Accept a JSON file with:
+   - Orders
+   - Available AMM liquidity in the current batch
+3. Respond with a JSON file containing:
+   - Order routing solutions
+   - Pricing details
+
+### Local Testing
+
+1. Use CoW protocol's shadow competition tools.
+2. Simulate batch auctions and verify surplus calculations.
+
+---
+
+## Usage Instructions
+
+### Cloning the Repository
+
+```bash
+git clone <repository-url>
+cd <repository-folder>
 ```
-cd existing_repo
-git remote add origin https://gitlab.engr.illinois.edu/ie421_high_frequency_trading_fall_2024/ie421_hft_fall_2024_group_18/group_18_project.git
-git branch -M main
-git push -uf origin main
+
+### Setting Up the Environment
+
+1. Install Python dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. Deploy the server locally or on Heroku:
+   ```bash
+   heroku deploy
+   ```
+
+### Running the Solver
+
+1. Start the server:
+   ```bash
+   python main.py
+   ```
+2. Test endpoints using sample batch auction data.
+
+### Visualizations
+
+Run the visualization script to see real-time graph transactions:
+
+```bash
+python visualize.py
 ```
 
-## Integrate with your tools
-
-- [ ] [Set up project integrations](https://gitlab.engr.illinois.edu/ie421_high_frequency_trading_fall_2024/ie421_hft_fall_2024_group_18/group_18_project/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+---
 
 ## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+1. Fork the repository.
+2. Create a feature branch:
+   ```bash
+   git checkout -b feature-name
+   ```
+3. Commit your changes:
+   ```bash
+   git commit -m "Description of changes"
+   ```
+4. Push to the branch:
+   ```bash
+   git push origin feature-name
+   ```
+5. Open a Pull Request.
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+---
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+This project is licensed under the MIT License. See the `LICENSE` file for details.
+
+---
+
+## Acknowledgments
+
+- [CoW Protocol Documentation](https://docs.cow.fi/cow-protocol)
+- [Solver Template Repository](https://github.com/cowprotocol/solver-template-py)
+- [Searcher CoWswap Repository](https://github.com/autistic-symposium/searcher-cowswap-py)

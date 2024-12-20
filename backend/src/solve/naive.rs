@@ -1,8 +1,8 @@
 // use num::{bigint::Sign, BigInt};
-// use primitive_types::U256;
+use primitive_types::U256;
 use solvers::domain::{auction::Auction, order::Side}; // Domain object
 use std::collections::HashMap;
-// use web3::types::Address;
+use web3::types::Address;
 
 #[derive(Debug)]
 pub struct Group<'a> {
@@ -80,13 +80,13 @@ pub fn group_by_token_pair(auction: &Auction) -> Groups {
     groups
 }
 
-// #[derive(Debug, Clone)]
-// struct TokenContext {
-//     address: Address,
-//     reserve: U256,
-//     buy_volume: U256,
-//     sell_volume: U256,
-// }
+#[derive(Debug, Clone)]
+struct TokenContext {
+    address: Address,
+    reserve: U256,
+    buy_volume: U256,
+    sell_volume: U256,
+}
 
 // pub fn u256_to_big_int(input: &U256) -> BigInt {
 //     BigInt::from_biguint(Sign::Plus, u256_to_big_uint(input))
@@ -112,55 +112,55 @@ pub fn group_by_token_pair(auction: &Auction) -> Groups {
 // Split orders into contexts: takes a limit order array with all having the same pair of tokens,
 // and consolidate the buy and sell contexts (amount being bought and sold, and chosen pool reserve amount)
 
-// pub fn split_into_contexts(group: &Group) -> (TokenContext, TokenContext) {
-//     let pool = group.pool;
-//     let orders = &group.orders;
-//     let mut contexts = HashMap::new();
+pub fn split_into_contexts(group: &Group) -> (TokenContext, TokenContext) {
+    let pool = group.pool;
+    let orders = &group.orders;
+    let mut contexts = HashMap::new();
 
-//     // Fetch the reserves as a tuple
-//     let (reserve_a, reserve_b) = pool.reserves.get();
-//     let token_a = reserve_a.token.0;
-//     let token_b = reserve_b.token.0;
+    // Fetch the reserves as a tuple
+    let (reserve_a, reserve_b) = pool.reserves.get();
+    let token_a = reserve_a.token.0;
+    let token_b = reserve_b.token.0;
 
-//     contexts.insert(
-//         token_a,
-//         TokenContext {
-//             address: reserve_a.token.0,
-//             reserve: reserve_a.amount,
-//             buy_volume: U256::zero(),
-//             sell_volume: U256::zero(),
-//         },
-//     );
-//     contexts.insert(
-//         token_b,
-//         TokenContext {
-//             address: reserve_b.token.0,
-//             reserve: reserve_b.amount,
-//             buy_volume: U256::zero(),
-//             sell_volume: U256::zero(),
-//         },
-//     );
+    contexts.insert(
+        token_a,
+        TokenContext {
+            address: reserve_a.token.0,
+            reserve: reserve_a.amount,
+            buy_volume: U256::zero(),
+            sell_volume: U256::zero(),
+        },
+    );
+    contexts.insert(
+        token_b,
+        TokenContext {
+            address: reserve_b.token.0,
+            reserve: reserve_b.amount,
+            buy_volume: U256::zero(),
+            sell_volume: U256::zero(),
+        },
+    );
 
-//     // Process each order to consolidate buy and sell volumes into the appropriate contexts
-//     for order in orders {
-//         // Update the context for the buy token
-//         if let Some(buy_context) = contexts.get_mut(&order.buy.token.0) {
-//             if order.side == Side::Buy {
-//                 buy_context.buy_volume += order.buy.amount;
-//             }
-//         } else {
-//             panic!("Buy token in order not part of pool token pair");
-//         }
+    // Process each order to consolidate buy and sell volumes into the appropriate contexts
+    for order in orders {
+        // Update the context for the buy token
+        if let Some(buy_context) = contexts.get_mut(&order.buy.token.0) {
+            if order.side == Side::Buy {
+                buy_context.buy_volume += order.buy.amount;
+            }
+        } else {
+            panic!("Buy token in order not part of pool token pair");
+        }
 
-//         // Update the context for the sell token
-//         if let Some(sell_context) = contexts.get_mut(&order.sell.token.0) {
-//             if order.side == Side::Sell {
-//                 sell_context.sell_volume += order.sell.amount;
-//             }
-//         } else {
-//             panic!("Sell token in order not part of pool token pair");
-//         }
-//     }
-//     let mut contexts = contexts.drain().map(|(_, v)| v);
-//     (contexts.next().unwrap(), contexts.next().unwrap())
-// }
+        // Update the context for the sell token
+        if let Some(sell_context) = contexts.get_mut(&order.sell.token.0) {
+            if order.side == Side::Sell {
+                sell_context.sell_volume += order.sell.amount;
+            }
+        } else {
+            panic!("Sell token in order not part of pool token pair");
+        }
+    }
+    let mut contexts = contexts.drain().map(|(_, v)| v);
+    (contexts.next().unwrap(), contexts.next().unwrap())
+}
