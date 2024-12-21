@@ -2,8 +2,8 @@ import React from 'react';
 import DataInput from '../components/DataInput';
 import { useNavigate } from 'react-router-dom';
 
-const SOLVER_API_URL = 'http://localhost:5000';
-// const SOLVER_API_URL = 'https://solverevlos-1edc36e90ed9.herokuapp.com/';
+const SOLVER_API_URL = 'http://localhost:8080';
+// const SOLVER_API_URL = 'https://solverevlos-1edc36e90ed9.herokuapp.com';
 
 const HomePage = ({ onDataSubmit }) => {
     const navigate = useNavigate();
@@ -14,7 +14,7 @@ const HomePage = ({ onDataSubmit }) => {
     };
 
     const handleAuctionDataSubmit = (data) => {
-        fetch(`${SOLVER_API_URL}/solve`, {
+        fetch(`${SOLVER_API_URL}/visualize`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
