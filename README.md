@@ -70,6 +70,7 @@ Let $\tau_i, \tau_j, \tau_k$ be tradeable tokens. The pairwise exchange rates be
 
 Uniform clearing prices means that the price to swap tokens $\tau_i$ and $\tau_j$ are the same for every person in that batch. Additionally, it means that
 $$p_{i|k}=p_{i|j}\cdot p_{j|k}$$ for any tokens $\tau_i, \tau_j, \tau_k$.
+
 Determining the best clearing prices is the key to maximizing surplus and winning the solver competition.
 
 There are a variety of strategies for order matching in order to maximize the surplus function, and while we implemented some simple ones there are more complex ways to solve the problem with multidimensional CoWs and intermediate trades. The strategies that we implemented are outlined below:
