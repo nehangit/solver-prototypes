@@ -77,6 +77,10 @@ There are a variety of strategies for order matching in order to maximize the su
 
 ### Provided Liquidity Immediate Matching (Luke's Solver)
 
+This was our first attempt at a solver, and the way it works is very simple. Whenever we receive an auction, there is a list of given liquidity options. We calculate the clearing prices as follows: iterate over all provided liquidity sources, and if a pool contains WETH and another token (call it XYZ), we will add the ratio between the reserve amount for WETH and the reserve amount from token XYZ (effectively the price of XYZ in WETH) to a list for token XYZ. The reasoning for this is that CoW Protocol enforces uniform clearing prices as described above, so if we have all prices set in terms of a reference token (in our case, WETH) we can guarantee that relative prices between tokens are uniform. Afterwards, we are left with a list of ratios for each token, and we will take the average of these ratios as the clearing price for each token.
+
+Now, to fill each order, we simply iterate over all orders, and if we determine that there is a pool with enough liquidity that can fill the order at the order's price, we fill the order and update the necessary fields in the solution, such as pre- and post-interactions and gas fees.
+
 ### Gecko Terminal Best On Chain Liquidity Solver (Philip's Solver)
 
 This solver uses the [GeckoTerminal API](https://www.geckoterminal.com/dex-api) to fetch liquidity pools hosted on multiple decentralized exchanges (DEXs) containing the relevant token pair in each order. The solver assumes that the lowest-fee liquidity pool has the best clearing price for each token pair.
@@ -97,6 +101,35 @@ This strategy gets its name by being one that comes to mind quickly for many whe
 3. **CoWs**: Match the buying and selling of the same token together, and whatever intents are excess are matched against the liquidity in the deepest pool.
 
 ### Bonus: Nonlinear Programming
+
+The idea behind this solver is to maximize the total trading volume of a batch auction, or get as many orders filled as possible (fully filled or partially filled). If more orders are filled, there are more opportunities for surplus, and so it makes sense intuitively that the score of this solver would be relatively high.
+
+While doing research, we came across a paper on how to determine uniform clearing prices for multi-token batch auctions, and they formulated optimizing trading volume as a set of constraints that need to be fulfilled:
+
+![Nonlinear Problem](./images/nonlinear_optimization.png)
+
+Essentially, the problem is to optimize the sum over all trading volumes for all orders. To clarify the constraints, let us define some variables first:
+
+- $v_i$ is the trading volume of order $i$.
+- $T_b$ is a matrix of zeroes and ones, where $t_{i,j}^b$ is 1 if order $i$ buys token $j$ and 0 otherwise.
+- $T_s$ is the counterpart of $T_b$ but for tokens sold, as $t_{i,j}^s$ is 1 if order $i$ sells token $j$ and 0 otherwise.
+- $\overline{x_i}$ is the maximum buy amount for order $i$, not to be confused with $x_i$, which is the actual executed buy amount for order $i$.
+- Similarly, $\overline{y_i}$ is the maximum sell amount for order $i$, and $y_i$ is the executed sell amount for order $i$.
+- $p_j$ is shorthand for $p_{j|0}$, the price of token $j$ in terms of the reference token.
+- $\gamma_j$ is the weight of token $j$, essentially the "importance" of token $j$ in the auction. Its weight can be determined by looking at the price of token $j$ in previous batch auctions.
+- Lastly, $\underline{p_j}$ and $\overline{p_j}$ are the lower and upper bounds of the price of token $j$. Basically, given a fluctuation parameter $\delta$, we do not want $p_j$ to deviate by more than a set function of $\delta$. This maintains consistency in the pricing of tokens.
+
+We are now subject to the following constraints:
+
+- (b) The number of tokens bought and sold across all orders is equal for every token. This is essentially the law of conservation but for trading: tokens cannot be created nor destroyed.
+- (c/d) Ensures that the value of $v_i$ is indeed the total trading volume of order $i$.
+- (e/f) Ensures that the executed buy and sell amounts are at most the maximum buy and sell amounts of order $i$.
+- (g) Order $i$ is executed at limit price or lower.
+- (h) The weighted sum of prices is 1 to maintain consistency.
+- (i) The determined clearing price of token $j$ is between the lower and upper bounds determined by our fluctuation parameter.
+- (j) No negative numbers are used (since you cannot buy or sell negative amounts).
+
+The basic setup to this solution has been done in src/nonlinear.rs, but unfortunately, none of us know how to optimize using nonlinear programming, so this solver is still a work-in-progress and would make an interesting future project. Additionally, for further reference, the paper on determining clearing prices is listed in the Acknowledgments section at the bottom.
 
 ### Graph Visualization
 
@@ -207,7 +240,7 @@ From here, copy and paste your auction into the right hand side box and submit i
 
 Avi Dhir (avidhir0@gmail.com) - https://www.linkedin.com/in/avi-dhir/
 
-Luke Hsiao -
+Luke Hsiao (lukehsiao1@gmail.com) - https://www.linkedin.com/in/luke-hsiao/
 
 Nehan Tarefder (nehantarefder@gmail.com) - https://www.linkedin.com/in/nehan-tarefder/
 
@@ -220,3 +253,5 @@ Philip Li (pli482004@gmail.com) - https://www.linkedin.com/in/the-philip-li
 - CoW Protocol Documentation:
   - [CoW Docs](https://docs.cow.fi/cow-protocol)
   - [The Problem](https://docs.cow.fi/cow-protocol/reference/core/auctions/the-problem)
+- Determining clearing prices in multi-token batch auctions:
+  - [Batch Auction Optimization](https://github.com/gnosis/dex-research/blob/master/BatchAuctionOptimization/batchauctions.pdf)
