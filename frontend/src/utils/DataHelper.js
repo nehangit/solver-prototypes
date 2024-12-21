@@ -82,85 +82,85 @@ const generateOperationsFromAuctionSolution = (data) => {
     const nodesSet = new Set();
 
     // Add nodes and edges for trades
-    data.trades.forEach((trade, index) => {
-        const tradeId = `trade-${index}`;
-        let order;
-        if(trade.kind === "fulfillment") {
-            order = trade.auction_orders.find((order) => order.uid === trade.order);
-        }
-        else { // trade.kind === "jit"
-            order = trade.order
-        }
-        let orderKind = order.kind;
-        let inToken, outToken, inAmount, outAmount;
-        let limitPrice = order.sellAmount / order.buyAmount;
-        let execPrice = data.prices[order.sellToken] / data.prices[order.buyToken];
-        if(orderKind === "buy") {
-            inToken = order.sellToken;
-            outToken = order.buyToken;
-            inAmount = trade.executedAmount;
-            outAmount = inAmount * execPrice;
-        }
-        else {
-            inToken = order.buyToken;
-            outToken = order.sellToken;
-            outAmount = trade.executedAmount;
-            inAmount = outAmount / execPrice;
-        }
+    // data.trades.forEach((trade, index) => {
+    //     const tradeId = `trade-${index}`;
+    //     let order;
+    //     if(trade.kind === "fulfillment") {
+    //         order = data.auction_orders.find((order) => order.uid === trade.order);
+    //     }
+    //     else { // trade.kind === "jit"
+    //         order = trade.order
+    //     }
+    //     let orderKind = order.kind;
+    //     let inToken, outToken, inAmount, outAmount;
+    //     let limitPrice = order.sellAmount / order.buyAmount;
+    //     let execPrice = data.prices[order.sellToken] / data.prices[order.buyToken];
+    //     if(orderKind === "buy") {
+    //         inToken = order.sellToken;
+    //         outToken = order.buyToken;
+    //         inAmount = trade.executedAmount;
+    //         outAmount = inAmount * execPrice;
+    //     }
+    //     else {
+    //         inToken = order.buyToken;
+    //         outToken = order.sellToken;
+    //         outAmount = trade.executedAmount;
+    //         inAmount = outAmount / execPrice;
+    //     }
 
-        // Add order node
-        const orderId = order.uid || `order-${index}`;
-        if (!nodesSet.has(orderId)) {
-            nodesSet.add(orderId);
-            operations.push({
-                type: "addNode",
-                id: orderId,
-                label: `${orderKind} order\nLimit Price: ${limitPrice}\nExecuted Price: ${execPrice}`,
-                position: { x: Math.random() * 800, y: Math.random() * 600 },
-            });
-        }
+    //     // Add order node
+    //     const orderId = order.uid || `order-${index}`;
+    //     if (!nodesSet.has(orderId)) {
+    //         nodesSet.add(orderId);
+    //         operations.push({
+    //             type: "addNode",
+    //             id: orderId,
+    //             label: `${orderKind} order\nLimit Price: ${limitPrice}\nExecuted Price: ${execPrice}`,
+    //             position: { x: Math.random() * 800, y: Math.random() * 600 },
+    //         });
+    //     }
 
-        // Add nodes and edges for the receiver and owner (if applicable)
-        if (order.receiver) {
-            if (!nodesSet.has(order.receiver)) {
-                nodesSet.add(order.receiver);
-                operations.push({
-                    type: "addNode",
-                    id: order.receiver,
-                    label: `Address\n${order.receiver}`,
-                    position: { x: Math.random() * 800, y: Math.random() * 600 },
-                });
-            }
+    //     // Add nodes and edges for the receiver and owner (if applicable)
+    //     if (order.receiver) {
+    //         if (!nodesSet.has(order.receiver)) {
+    //             nodesSet.add(order.receiver);
+    //             operations.push({
+    //                 type: "addNode",
+    //                 id: order.receiver,
+    //                 label: `Address\n${order.receiver}`,
+    //                 position: { x: Math.random() * 800, y: Math.random() * 600 },
+    //             });
+    //         }
 
-            operations.push({
-                type: "addEdge",
-                id: `receiver-edge-${index}`,
-                source: orderId,
-                target: order.receiver,
-                label: `Token: ${inToken}\nAmount: ${inAmount}`,
-            });
-        }
+    //         operations.push({
+    //             type: "addEdge",
+    //             id: `receiver-edge-${index}`,
+    //             source: orderId,
+    //             target: order.receiver,
+    //             label: `Token: ${inToken}\nAmount: ${inAmount}`,
+    //         });
+    //     }
 
-        if (order.owner) {
-            if (!nodesSet.has(order.owner)) {
-                nodesSet.add(order.owner);
-                operations.push({
-                    type: "addNode",
-                    id: order.owner,
-                    label: `Owner\n${order.owner}`,
-                    position: { x: Math.random() * 800, y: Math.random() * 600 },
-                });
-            }
+    //     if (order.owner) {
+    //         if (!nodesSet.has(order.owner)) {
+    //             nodesSet.add(order.owner);
+    //             operations.push({
+    //                 type: "addNode",
+    //                 id: order.owner,
+    //                 label: `Owner\n${order.owner}`,
+    //                 position: { x: Math.random() * 800, y: Math.random() * 600 },
+    //             });
+    //         }
 
-            operations.push({
-                type: "addEdge",
-                id: `owner-edge-${index}`,
-                source: order.owner,
-                target: orderId,
-                label: `Token: ${outToken}\nAmount: ${outAmount}`,
-            });
-        }
-    });
+    //         operations.push({
+    //             type: "addEdge",
+    //             id: `owner-edge-${index}`,
+    //             source: order.owner,
+    //             target: orderId,
+    //             label: `Token: ${outToken}\nAmount: ${outAmount}`,
+    //         });
+    //     }
+    // });
 
      // Add nodes and edges for liquidity interactions
     data.liquidity_interactions.forEach((interaction, index) => {
@@ -192,7 +192,7 @@ const generateOperationsFromAuctionSolution = (data) => {
             id: `liquidity-edge-${index}`,
             source: interaction.from,
             target: interaction.to,
-            label: `Token: ${interaction.token}\nAmount: ${interaction.amount}`,
+            label: `Token: ${interaction.token}, \nAmount: ${interaction.amount}`,
         });
     });
 

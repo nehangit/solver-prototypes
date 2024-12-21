@@ -30,7 +30,8 @@ const HomePage = ({ onDataSubmit }) => {
                 return response.json();
             })
             .then((res) => {
-                solution = res.solutions[0];
+                console.log(res);
+                var solution = res.solutions.solutions[0];
                 solution.auction_orders = data.orders;
                 solution.liquidity_interactions = res.graph_edges
                 onDataSubmit(solution);
