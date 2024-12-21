@@ -1,78 +1,81 @@
-# Cross-Chain Automated Solver for CoW Protocol
-
-## Overview
-
-This project focuses on building a cross-chain automated solver off-chain to efficiently route trading intents to the correct venue or party for execution or fulfillment on-chain. Initially, the solver targets CoW (Coincidence of Wants) batch auctions, aiming to match peer-to-peer orders optimally. The solver will integrate with auction protocols using a Request for Quotes (RFQ) model to submit competitive bids and complete transactions efficiently within tight timeframes.
-
-By extending an open-source solver, this project contributes to the growing decentralized finance (DeFi) ecosystem, addressing challenges like order routing, capital efficiency, and minimizing latency in transaction execution. The system aims to maximize surplus for users, reduce gas fees, and mitigate MEV risks.
-
----
+# Automated Batch Auction Solver for CoW Protocol
 
 ## Motivation
 
-DeFi's rapid growth necessitates efficient trading solutions. Blockchains present unique challenges, such as:
+In traditional finance, orders are typically collected in order books. Think of stock exchanges or futures markets. A trade happens whenever a buy order of one token is matched by a sell order of the other, i.e., if there exists an exchange rate that satisfies the limit prices stated in the respective orders.
 
-- Different token standards
-- Variations in liquidity pools
-- Infrastructure constraints
+However, decentralized finance (DeFi) presents a unique challenge. Instead of trading in US Dollars, for example, there are hundreds of thousands of different tradable tokens. In such a setting, one separate order book is required for every token pair combination. This may significantly limit liquidity for less frequently traded token pairs and lead to large bid-ask spreads and low trading volumes.
 
-Solvers play a pivotal role by acting as market makers, executing trades across tokens via protocols and bridges. The solver in this project specifically targets CoW protocol batch auctions, optimizing order surplus to benefit users and the protocol.
+One solution to this problem is the batch auction. Orders are collected into a batch and executed at once in discrete time intervals. This leads to greater liquidity and removes arbitrage opportunities, yielding benefits to all users of batch auction protocols.
+
+## Background on CoW Protocol and Solvers
+
+### What is the CoW Protocol?
+
+The **CoW Protocol** (Coincidence of Wants Protocol) is a decentralized system for trading crypto assets efficiently and securely. It connects users with matching trade needs directly or combines trades to minimize costs, avoiding the need for traditional intermediaries like exchanges.
+
+Rather than placing orders by signing a raw transaction that executes directly on-chain (i.e. as happens on Uniswap or SushiSwap), CoW Protocol users place orders by signing an "intent to trade" message that specifies parameters like the assets and amounts they would like to trade. The intent is a signed message which allows the solvers to execute a trade on behalf of the user using their specified assets and amounts.
+
+There are a number of financial and technical advantages to intent-based trading. When a user places a trade directly on-chain, the execution path is set in stone and the trader receives whatever price (+/- slippage) the AMM or aggregator they're trading on gives them. In contrast, batch auction protocols such as CoW group and process many intents together to find optimal matches and execution paths, which reduces transaction costs.
+
+Thanks to its intent-based architecture, CoW Protocol delegates the job of finding the optimal execution path to professional third parties known as solvers. Solvers not only scan all available on-chain liquidity (similar to a DEX aggregator) they also provide extra price improvements in several ways:
+
+- **Coincidence of Wants (CoW)**: Direct P2P (peer-to-peer) matching for two or more users who have expressed opposite buy and sell intents for the same token pair. This optimization, enabled by batch auctions, allows users to bypass liquidity provider (LP) fees and reduces the gas fees for trading as orders don't need to interact with more smart contracts.
+- **Private Market Maker Inventory**: Many solvers have access to off-chain liquidity, integration with private market makers, or private liquidity of their own. This allows them to fill certain trades at better prices than what may be available through on-chain AMMs at any given time.
+- **MEV (Maximum Extractable Value) Protection**: MEV refers to the profit that miners, validators, or arbitrageurs can extract by reordering, including, or excluding transactions within a block before it's finalized. CoW Protocol, users are never exposed to MEV bots. Instead, solvers settle trades on behalf of the user, taking on all MEV risk. In addition, solvers submit all orders in a batch at a uniform clearing price, meaning there is no advantage to re-ordering trades (the basis of all MEV exploitation).
+
+### What Exactly Are Solvers?
+
+**Solvers** are entities within the CoW Protocol that compete to execute trades in the best way possible. When you submit a trade request, Solvers:
+
+1. Analyze available trading options.
+2. Consider all markets and matching opportunities.
+3. Propose the most cost-effective solution.
+
+For each batch auction, there is a competition between the active solvers to find the best optimization for the same objective function (maximizing "surplus" across the executed trades, see Technical Details section below). The Solver that finds the optimal set of trades/transfers wins and executes their solution, ensuring efficiency and fairness. The Solver that wins is rewarded by the CoW protocol in COW tokens, incentivizing them to compete to find better prices and win the right to execute user intents.
+
+### Why Are Solvers Important?
+
+- **Optimal Pricing**: They ensure you get the best price by exploring all available paths.
+- **Reduced Costs**: Solvers optimize trades to minimize fees and maximize value.
+- **Competition-Driven**: Multiple Solvers competing ensures the best solution is chosen.
+
+By integrating batch auctions and leveraging Solvers, the CoW Protocol delivers a robust and innovative framework for best price crypto trading.
+
+### CoW Protocol Order Flow
+
+![CoW Protocol Order Flow](./images/cowflow.png)
 
 ---
 
-## Features
+## Project Overview
 
-### Auction Solvers
+Our project focuses on creating our own solver from scratch, using Rust and hosted on Heroku, and entering the solver competition, in order to facilitate trades as specified by the CoW Protocol. Our solver match orders to available liquidity, choosing efficient and consistent clearing prices to guarantee a fair and efficient batch auction.
 
-- **Batch Auctions**: Match orders directly when possible; fallback to AMMs or liquidity pools when necessary.
-- **Surplus Maximization**: Optimize the surplus function for limit buy and sell orders.
-- **Gas and MEV Efficiency**: Avoid gas fees for canceled trades and minimize MEV risks.
-
-### Solution Graph Visualization
-
-- **Order Routing**: Dynamically compute optimal routes for cross-chain trading.
-- **Auction Integration**: Participate in RFQ-based auctions with competitive bids.
-- **Latency Reduction**: Respond within 10-second batch auction windows.
-- **Combinatorial Problem Solving**: Solve algebraic problems to maximize efficiency.
+Additionally, we created a JavaScript visualization to display solutions created by our solver or other people's solvers. This will provide a clean overview of what a solver deemed to be the most fair and surplus-maximizing solution for a batch auction.
 
 ---
 
 ## Technical Details
 
-### Surplus Calculation and Objective Function
+### Surplus Calculation, Objective Function, and Clearing Prices
 
-The surplus for an order \( o \) is defined as:
-
-\[ U(x, -y) = \begin{cases}
-(x - y \pi)p(b) & \text{for limit sell orders} \\
-(x \pi - y)p(s) & \text{for limit buy orders}
-\end{cases} \]
-
-where:
-
-- \( x \): Amount of token to buy
-- \( y \): Amount of token to sell
-- \( \pi \): Price ratio provided by the user
-- \( p(b), p(s) \): Normalized prices of the bought/sold tokens
-
-The solution quality \( Q \) is the sum of surpluses over all orders plus protocol fees:
-
-\[ Q = \sum_o U(o) + \sum_o p \cdot f(o) \]
-
-The solver maximizes \( Q \) to win auctions.
-
-### Naive Solver
+![Optimization Problem](./images/optimization.png)
 
 ### Provided Liquidity Immediate Matching (Luke's Solver)
 
-### Gecko Terminal On Chain Liquidity Solver (Phillip's Solver)
+### Gecko Terminal Best On Chain Liquidity Solver (Philip's Solver)
+
+This solver uses the [GeckoTerminal API](https://www.geckoterminal.com/dex-api) to fetch pools
 
 ### Bonus: Nonlinear Programming
+
+### Graph Visualization
 
 ### Architecture
 
 - **Programming Languages**:
-  - **Python**: For high-level logic, testing, and performance analysis.
+- **Python**: For high-level logic, testing, and performance analysis.
 - **Server**: Hosted on Heroku, implementing CoW protocol-required endpoints.
 - **Optimization Algorithms**: Includes Bellman-Ford for graph-based optimization.
 - **Testing and Simulation**: Locally simulate batch auctions and compare solutions.
@@ -85,38 +88,6 @@ The solver maximizes \( Q \) to win auctions.
 - CoW Protocol Documentation:
   - [CoW Docs](https://docs.cow.fi/cow-protocol)
   - [The Problem](https://docs.cow.fi/cow-protocol/reference/core/auctions/the-problem)
-
----
-
-## Milestones and Timeline
-
-### Phase 1: Research and Setup
-
-- **11/16 - 11/20**
-  - Set up Heroku server and basic graph functionality.
-  - Explore Bellman-Ford Algorithm.
-  - Refactor core files for new auction schema.
-
-### Phase 2: Refactoring and POC Development
-
-- **11/21 - 11/29**
-  - Implement Bellman-Ford Proof of Concept (POC).
-  - Refactor `spread_solver.py` and integrate with Heroku endpoints.
-  - Debug and integrate functionality for batch auctions.
-
-### Phase 3: Testing and Optimization
-
-- **11/30 - 12/9**
-  - Create simulation for batch auctions and test surplus calculations.
-  - Implement and test limit buy orders.
-  - Begin shadow competition integration.
-
-### Phase 4: Finalization and Visualization
-
-- **12/10 - 12/17**
-  - Develop visualizations for graph transactions in real-time.
-  - Optimize and parallelize code.
-  - Fully integrate with CoW protocol and finalize for competition.
 
 ---
 
@@ -177,30 +148,7 @@ python visualize.py
 
 ---
 
-## Contributing
-
-1. Fork the repository.
-2. Create a feature branch:
-   ```bash
-   git checkout -b feature-name
-   ```
-3. Commit your changes:
-   ```bash
-   git commit -m "Description of changes"
-   ```
-4. Push to the branch:
-   ```bash
-   git push origin feature-name
-   ```
-5. Open a Pull Request.
-
----
-
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for details.
-
----
+## Our Team
 
 ## Acknowledgments
 

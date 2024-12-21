@@ -29,8 +29,8 @@ use solve::onchain::fill_with_uniswap_liquidity;
 use structures::gas_price::{GasOracleResponse, GasPrices};
 use structures::pools::{Pool, Pools};
 use utils::parse::json_to_struct;
-use utils::token_swap::get_direct_swap_pool;
 use utils::token_swap::convert_pool_to_liquidity;
+use utils::token_swap::get_direct_swap_pool;
 use utils::token_swap::FetchPoolError;
 
 #[derive(Serialize, Debug)]
@@ -158,84 +158,84 @@ async fn post_notify(body: web::Bytes) -> impl Responder {
     HttpResponse::Ok().json(json!({"status": "ok"}))
 }
 
-// #[actix_web::main]
-// async fn main() -> std::io::Result<()> {
-//     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
-//     let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
-//     HttpServer::new(|| {
-//         App::new()
-//             .wrap(Logger::default())
-//             .app_data(web::PayloadConfig::default().limit(50 * 1024 * 1024))
-//             .route("/", web::get().to(get_hello))
-//             .route("/notify", web::post().to(post_notify))
-//             .route("/solve", web::post().to(post_solve))
-//             .route("/visualize", web::post().to(post_visualization))
-//     })
-//     .bind(format!("0.0.0.0:{}", port))?
-//     .run()
-//     .await
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
+    HttpServer::new(|| {
+        App::new()
+            .wrap(Logger::default())
+            .app_data(web::PayloadConfig::default().limit(50 * 1024 * 1024))
+            .route("/", web::get().to(get_hello))
+            .route("/notify", web::post().to(post_notify))
+            .route("/solve", web::post().to(post_solve))
+            .route("/visualize", web::post().to(post_visualization))
+    })
+    .bind(format!("0.0.0.0:{}", port))?
+    .run()
+    .await
+}
+
+// #[tokio::main]
+// async fn main() {
+// Replace with your Etherscan API key
+// let api_key = "BQAT6JY5DAY3MJF8FY7PMHKACRPXM19JB1".to_string();
+
+// // Shared gas_price variable
+// let gas_price = Arc::new(Mutex::new(None));
+
+// // Clone the Arc to move into the task
+// let gas_price_clone = gas_price.clone();
+
+// // Spawn the background task
+// tokio::spawn(async move {
+//     update_gas_price(gas_price_clone, api_key).await;
+// });
+
+// sleep(Duration::from_millis(1000)).await;
+
+// let mut auction: Auction = json_to_struct("data/real_sample.json");
+
+// populate_liquidity_for_auction(&mut auction).await.unwrap();
+
+// let (solution, graph_edges) = fill_with_given_liquidity(auction);
+
+// let solutionsdto = Solutions {
+//     solutions: vec![solution],
+// };
+
+// println!("Solutions: {:#?}", solutionsdto);
+
+// let auction_domain = match to_domain(&auction) {
+//     Ok(value) => value,
+//     Err(err) => {
+//         return;
+//     }
+// };
+// let deadline = auction_domain.deadline.clone();
+// let groups = naive::group_by_token_pair(&auction_domain);
+// for (token_pair, group) in groups.iter() {
+//     (context_a, context_b) = split_into_contexts(group);
 // }
 
-#[tokio::main]
-async fn main() {
-    // Replace with your Etherscan API key
-    // let api_key = "BQAT6JY5DAY3MJF8FY7PMHKACRPXM19JB1".to_string();
+// let naivesolver = Naive;
+// let solutions = naivesolver.solve(auction_domain).await;
+// let solutionsdto = from_domain(&solutions);
+// println!("Solution: {:#?}", solutionsdto);
+// let gas_price_lock = gas_price.lock().unwrap();
+// if let Some(gas_prices) = &*gas_price_lock {
+//     let solution = fill_with_uniswap_liquidity(auction, gas_prices.clone()).await;
+//     println!("{:#?}", solution.0);
 
-    // // Shared gas_price variable
-    // let gas_price = Arc::new(Mutex::new(None));
+//     let sol_json = serde_json::to_string_pretty(&solution.0).unwrap();
+//     println!("{}", sol_json);
 
-    // // Clone the Arc to move into the task
-    // let gas_price_clone = gas_price.clone();
-
-    // // Spawn the background task
-    // tokio::spawn(async move {
-    //     update_gas_price(gas_price_clone, api_key).await;
-    // });
-
-    // sleep(Duration::from_millis(1000)).await;
-
-    let mut auction: Auction = json_to_struct("data/real_sample.json");
-
-    populate_liquidity_for_auction(&mut auction).await.unwrap();
-
-    let (solution, graph_edges) = fill_with_given_liquidity(auction);
-
-    let solutionsdto = Solutions {
-        solutions: vec![solution],
-    };
-
-    println!("Solutions: {:#?}", solutionsdto);
-
-    // let auction_domain = match to_domain(&auction) {
-    //     Ok(value) => value,
-    //     Err(err) => {
-    //         return;
-    //     }
-    // };
-    // let deadline = auction_domain.deadline.clone();
-    // let groups = naive::group_by_token_pair(&auction_domain);
-    // for (token_pair, group) in groups.iter() {
-    //     (context_a, context_b) = split_into_contexts(group);
-    // }
-
-    // let naivesolver = Naive;
-    // let solutions = naivesolver.solve(auction_domain).await;
-    // let solutionsdto = from_domain(&solutions);
-    // println!("Solution: {:#?}", solutionsdto);
-    // let gas_price_lock = gas_price.lock().unwrap();
-    // if let Some(gas_prices) = &*gas_price_lock {
-    //     let solution = fill_with_uniswap_liquidity(auction, gas_prices.clone()).await;
-    //     println!("{:#?}", solution.0);
-
-    //     let sol_json = serde_json::to_string_pretty(&solution.0).unwrap();
-    //     println!("{}", sol_json);
-
-    //     let edge_json = serde_json::to_string_pretty(&solution.1).unwrap();
-    //     println!("{}", edge_json);
-    // } else {
-    //     println!("Gas price not available yet");
-    // }
-}
+//     let edge_json = serde_json::to_string_pretty(&solution.1).unwrap();
+//     println!("{}", edge_json);
+// } else {
+//     println!("Gas price not available yet");
+// }
+// }
 
 /// Fetches gas prices from Etherscan
 async fn fetch_gas_prices(api_key: &str) -> Result<GasPrices, Error> {
@@ -295,9 +295,11 @@ pub async fn populate_liquidity_for_auction(auction: &mut Auction) -> Result<(),
                 }
             }
             Err(e) => {
-                eprintln!("Failed to get direct swap pool for {} -> {}: {:?}", 
-                          buy_token_str, sell_token_str, e);
-                // Depending on your logic, you may want to continue or return Err(e) 
+                eprintln!(
+                    "Failed to get direct swap pool for {} -> {}: {:?}",
+                    buy_token_str, sell_token_str, e
+                );
+                // Depending on your logic, you may want to continue or return Err(e)
                 // If you just want to skip this order:
                 continue;
             }
