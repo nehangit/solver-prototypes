@@ -77,7 +77,9 @@ There are a variety of strategies for order matching in order to maximize the su
 ### Gecko Terminal Best On Chain Liquidity Solver (Philip's Solver)
 
 This solver uses the [GeckoTerminal API](https://www.geckoterminal.com/dex-api) to fetch liquidity pools hosted on multiple decentralized exchanges (DEXs) containing the relevant token pair in each order. The solver assumes that the lowest-fee liquidity pool has the best clearing price for each token pair.
+
 Let $\tau_i$ be the token to be bought and $\tau_j$ be the token to be sold. Each order specifies nonnegative amounts $\bar{x}, \bar{y}$, where $\bar{x}$ is the maximum amount of $\tau_i$ to be bought and $\bar{y}$ is the maximum amount of $\tau_j$ to be sold.
+
 It then calculates the maximum amount of tokens that can be traded using the following formulas. Let $p_{i|j}$ be the number of $\tau_j$ you would buy for selling one $\tau_i$. Define $p_{j|i}$ correspondingly. Then the maximum amount of $\tau_i$ to be bought $x$ is equal to
 $$x=min(\bar{x}, \bar{y} \cdot p_{j|i})$$
 The maximum amount of $\tau_j$ to be sold $y=x\cdot p_{i|j}$.
