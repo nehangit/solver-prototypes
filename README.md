@@ -10,6 +10,8 @@ One solution to this problem is the batch auction. Orders are collected into a b
 
 ## Background on CoW Protocol and Solvers
 
+![CoW Swap](./images/whatiscow.png)
+
 ### What is the CoW Protocol?
 
 The **CoW Protocol** (Coincidence of Wants Protocol) is a decentralized system for trading crypto assets efficiently and securely. It connects users with matching trade needs directly or combines trades to minimize costs, avoiding the need for traditional intermediaries like exchanges.
@@ -99,7 +101,14 @@ The visualization serves to represent both the solutions we propose and the actu
 Additionally, the winning solutions from the auction are visualized alongside ours. This comparison enables us to directly observe how the actual outcomes differ from our proposals.
 Use the [Tenderly API](https://api.tenderly.co/api/v1/public-contract/1/trace/0x9bdc422cd0ec4f0e7154df88434b98c8185e955b2e03ef866b9349489f01870c) to fetch the winning solution, and paste the JSON file into our website.
 For example, we can analyze how the winning solution minimizes edge overlaps or optimizes certain parameters, such as transaction costs or time. This dual-layer visualization helps us not only refine our approaches but also gain deeper insights into the strategies that succeed in real auction scenarios.
+
+![Solver Visualization](./images/solverVis.png)
+
+Direct Liquidity Matching Solution
+
 ![CoW Protocol Solution Visual](./images/complexWinningVisualization.png)
+
+CoW Protocol Solution
 
 ## Architecture
 
