@@ -42,8 +42,8 @@ pub struct Attributes {
     #[serde(deserialize_with = "deserialize_bigdecimal")]
     pub token_price_usd: BigDecimal,
 
-    #[serde(deserialize_with = "deserialize_u256")]
-    pub fdv_usd: U256,
+    #[serde(deserialize_with = "deserialize_bigdecimal")]
+    pub fdv_usd: BigDecimal,
 
     #[serde(deserialize_with = "deserialize_bigdecimal")]
     pub market_cap_usd: BigDecimal,

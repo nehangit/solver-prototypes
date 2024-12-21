@@ -95,8 +95,12 @@ pub async fn fill_with_uniswap_liquidity(
                 .eq_ignore_ascii_case(&format!("eth_{}", &order.buy_token))
             {
                 // Convert U256 sell_amount/buy_amount into BigDecimal
-                let order_buy_amount = BigDecimal::from(order.buy_amount.as_u128());
-                let order_sell_amount = BigDecimal::from(order.sell_amount.as_u128());
+                // let order_buy_amount = BigDecimal::from(order.buy_amount.as_u128());
+                let u128_val_buy = order.buy_amount.as_u128();
+                let order_buy_amount = BigDecimal::from_str(&u128_val_buy.to_string()).unwrap();
+
+                let u128_val_sell = order.sell_amount.as_u128();
+                let order_sell_amount = BigDecimal::from_str(&u128_val_sell.to_string()).unwrap();
 
                 // Condition: buy_amount * price_quote_token <= sell_amount ?
                 let lhs = &order_buy_amount * &base_token_price_quote_token;
@@ -108,14 +112,16 @@ pub async fn fill_with_uniswap_liquidity(
                 } else {
                     // We pick sell_amount * quote_token_price_base_token
                     // (both must end as BigDecimal before converting to u128)
-                    let calc = BigDecimal::from(order.sell_amount.as_u128())
+                    let u128_val_calc = order.sell_amount.as_u128();
+                    let calc = BigDecimal::from_str(&u128_val_calc.to_string()).unwrap()
                         * &quote_token_price_base_token;
                     calc.to_u128().unwrap_or(u128::MAX)
                 };
 
                 // Similarly compute max_sell_amt = max_buy_amt * base_token_price_quote_token
                 // But we do it in BigDecimal first:
-                let max_buy_amt_dec = BigDecimal::from(max_buy_amt);
+                let u128_val_max_buy = max_buy_amt;
+                let max_buy_amt_dec = BigDecimal::from_str(&u128_val_max_buy.to_string()).unwrap();
                 let max_sell_amt_dec = &max_buy_amt_dec * &base_token_price_quote_token;
 
                 // Calculate reserves in BigDecimal
@@ -222,8 +228,14 @@ pub async fn fill_with_uniswap_liquidity(
             } else {
                 // if buyToken is quoteToken
                 // Convert U256 sell_amount/buy_amount into BigDecimal
-                let order_buy_amount = BigDecimal::from(order.buy_amount.as_u128());
-                let order_sell_amount = BigDecimal::from(order.sell_amount.as_u128());
+
+                let u128_val_buy = order.buy_amount.as_u128();
+                let order_buy_amount = BigDecimal::from_str(&u128_val_buy.to_string()).unwrap();
+
+                let u128_val_sell = order.sell_amount.as_u128();
+                let order_sell_amount = BigDecimal::from_str(&u128_val_sell.to_string()).unwrap();
+
+
 
                 // Condition: buy_amount * price_quote_token <= sell_amount ?
                 let lhs = &order_buy_amount * &quote_token_price_base_token;
@@ -235,14 +247,17 @@ pub async fn fill_with_uniswap_liquidity(
                 } else {
                     // We pick sell_amount * quote_token_price_base_token
                     // (both must end as BigDecimal before converting to u128)
-                    let calc = BigDecimal::from(order.sell_amount.as_u128())
-                        * &base_token_price_quote_token;
+
+                    let u128_val_calc = order.sell_amount.as_u128();
+                    let calc = BigDecimal::from_str(&u128_val_calc.to_string()).unwrap()
+                        * &quote_token_price_base_token;
                     calc.to_u128().unwrap_or(u128::MAX)
                 };
 
                 // Similarly compute max_sell_amt = max_buy_amt * base_token_price_quote_token
                 // But we do it in BigDecimal first:
-                let max_buy_amt_dec = BigDecimal::from(max_buy_amt);
+                let u128_val_max_buy = max_buy_amt;
+                let max_buy_amt_dec = BigDecimal::from_str(&u128_val_max_buy.to_string()).unwrap();
                 let max_sell_amt_dec = &max_buy_amt_dec * &quote_token_price_base_token;
 
                 // Calculate reserves in BigDecimal
