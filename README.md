@@ -110,26 +110,26 @@ While doing research, we came across a paper on how to determine uniform clearin
 
 Essentially, the problem is to optimize the sum over all trading volumes for all orders. To clarify the constraints, let us define some variables first:
 
-- $v_i$ is the trading volume of order $i$.
-- $T_b$ is a matrix of zeroes and ones, where $t_{i,j}^b$ is 1 if order $i$ buys token $j$ and 0 otherwise.
-- $T_s$ is the counterpart of $T_b$ but for tokens sold, as $t_{i,j}^s$ is 1 if order $i$ sells token $j$ and 0 otherwise.
-- $\overline{x_i}$ is the maximum buy amount for order $i$, not to be confused with $x_i$, which is the actual executed buy amount for order $i$.
-- Similarly, $\overline{y_i}$ is the maximum sell amount for order $i$, and $y_i$ is the executed sell amount for order $i$.
-- $p_j$ is shorthand for $p_{j|0}$, the price of token $j$ in terms of the reference token.
-- $\gamma_j$ is the weight of token $j$, essentially the "importance" of token $j$ in the auction. Its weight can be determined by looking at the price of token $j$ in previous batch auctions.
-- Lastly, $\underline{p_j}$ and $\overline{p_j}$ are the lower and upper bounds of the price of token $j$. Basically, given a fluctuation parameter $\delta$, we do not want $p_j$ to deviate by more than a set function of $\delta$. This maintains consistency in the pricing of tokens.
+- $v_i$ is the trading volume of order `i`.
+- $T_b$ is a matrix of zeroes and ones, where $t_{i,j}^b$ is 1 if order `i` buys token `j` and 0 otherwise.
+- $T_s$ is the counterpart of $T_b$ but for tokens sold, as $t_{i,j}^s$ is 1 if order `i` sells token `j` and 0 otherwise.
+- $\overline{x_i}$ is the maximum buy amount for order `i`, not to be confused with $x_i$, which is the actual executed buy amount for order `i`.
+- Similarly, $\overline{y_i}$ is the maximum sell amount for order `i`, and $y_i$ is the executed sell amount for order `i`.
+- $p_j$ is shorthand for $p_{j|0}$, the price of token `j` in terms of the reference token.
+- $\gamma_j$ is the weight of token `j`, essentially the "importance" of token `j` in the auction. Its weight can be determined by looking at the price of token `j` in previous batch auctions.
+- Lastly, $\underline{p_j}$ and $\overline{p_j}$ are the lower and upper bounds of the price of token `j`. Basically, given a fluctuation parameter $\delta$, we do not want $p_j$ to deviate by more than a set function of $\delta$. This maintains consistency in the pricing of tokens.
 
 We are now subject to the following constraints:
 
 - (b) The number of tokens bought and sold across all orders is equal for every token. This is essentially the law of conservation but for trading: tokens cannot be created nor destroyed.
-- (c/d) Ensures that the value of $v_i$ is indeed the total trading volume of order $i$.
-- (e/f) Ensures that the executed buy and sell amounts are at most the maximum buy and sell amounts of order $i$.
-- (g) Order $i$ is executed at limit price or lower.
-- (h) The weighted sum of prices is 1 to maintain consistency.
-- (i) The determined clearing price of token $j$ is between the lower and upper bounds determined by our fluctuation parameter.
+- (c/d) Ensures that the value of $v_i$ is indeed the total trading volume of order `i`.
+- (e/f) Ensures that the executed buy and sell amounts are at most the maximum buy and sell amounts of order `i`.
+- (g) Order `i` is executed at limit price or lower.
+- (h) The weighted sum of token prices is 1 to maintain consistency.
+- (i) The determined clearing price of token `j` is between the lower and upper bounds determined by our fluctuation parameter.
 - (j) No negative numbers are used (since you cannot buy or sell negative amounts).
 
-The basic setup to this solution has been done in src/nonlinear.rs, but unfortunately, none of us know how to optimize using nonlinear programming, so this solver is still a work-in-progress and would make an interesting future project. Additionally, for further reference, the paper on determining clearing prices is listed in the Acknowledgments section at the bottom.
+The basic setup to this solution has been done in backend/src/solve/nonlinear.rs, but unfortunately, none of us know how to optimize using nonlinear programming, so this solver is still a work-in-progress and would make an interesting future project. Additionally, for further reference, the paper on determining clearing prices is listed in the Acknowledgments section at the bottom.
 
 ### Graph Visualization
 
