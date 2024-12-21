@@ -29,9 +29,10 @@ const HomePage = ({ onDataSubmit }) => {
                 }
                 return response.json();
             })
-            .then((solution) => {
-                // solution = solution.solutions[0];
+            .then((res) => {
+                solution = res.solutions[0];
                 solution.auction_orders = data.orders;
+                solution.liquidity_interactions = res.graph_edges
                 onDataSubmit(solution);
                 navigate('/visualization');
             })
