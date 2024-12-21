@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
 use anyhow::Error;
 use log::info; // Logging macro
@@ -114,7 +115,7 @@ async fn post_visualization(body: web::Bytes) -> impl Responder {
     if let Err(e) = write_to_firebase("logs/solve", &body_str).await {
         info!("Failed to write to Firebase: {}", e);
     }
-
+    println!("here");
     let mut auction: Auction = match from_str(&body_str) {
         Ok(auction) => auction,
         Err(_) => {
@@ -161,10 +162,20 @@ async fn post_notify(body: web::Bytes) -> impl Responder {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+
     let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
+
     HttpServer::new(|| {
         App::new()
             .wrap(Logger::default())
+            .wrap(
+                Cors::default()
+                    .allowed_origin("http://localhost:3000") // Allow requests from your UI
+                    .allowed_methods(vec!["GET", "POST", "OPTIONS"])
+                    .allowed_headers(vec![actix_web::http::header::CONTENT_TYPE])
+                    .supports_credentials()
+                    .max_age(3600),
+            )
             .app_data(web::PayloadConfig::default().limit(50 * 1024 * 1024))
             .route("/", web::get().to(get_hello))
             .route("/notify", web::post().to(post_notify))
